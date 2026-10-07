@@ -1,0 +1,60 @@
+{
+  "name": "saba-md",
+  "version": "1.0.0",
+  "description": "💚 Saba MD — Ultra Advanced WhatsApp Multi-Device Bot with Fancy Pairing Website | Made by Arslan Tech's for Saba",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "node -e \"require('./config'); require('./utils/logger'); console.log('✅ Config + Logger OK')\"",
+    "clean": "node -e \"require('fs-extra').removeSync('session'); console.log('🧹 Session cleared')\""
+  },
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "baileys",
+    "multi-device",
+    "pairing",
+    "saba-md",
+    "arslan-tech"
+  ],
+  "author": "Arslan Tech's",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ArslanTech-dev/Saba-MD.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ArslanTech-dev/Saba-MD/issues"
+  },
+  "homepage": "https://github.com/ArslanTech-dev/Saba-MD#readme",
+
+  "dependencies": {
+    "@hapi/boom": "^10.0.1",
+    "@whiskeysockets/baileys": "7.0.0-rc.9",
+    "awesome-phonenumber": "^7.0.0",
+    "axios": "^1.7.9",
+    "chalk": "^4.1.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "file-type": "^19.6.0",
+    "fluent-ffmpeg": "^2.1.3",
+    "fs-extra": "^11.2.0",
+    "jimp": "^0.22.12",
+    "moment-timezone": "^0.5.46",
+    "node-cache": "^5.1.2",
+    "pino": "^9.5.0",
+    "qrcode-terminal": "^0.12.0"
+  },
+
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  },
+
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}
