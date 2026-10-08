@@ -1,19 +1,23 @@
 // ===============================================
 //  💚 SABA MD — HELPER FUNCTIONS
-//  👨‍💻 Made by Arslan Tech's
+//  👨‍💻 Made by Arslan Tech's for Saba
 // ===============================================
 
+const fs   = require('fs');
+const path = require('path');
 const config = require('../config');
 
 const helper = {
 
-    // ─── Random pick from array ───
+    // ═══════════════════════════════════════════
+    //  🎲 RANDOM / GENERAL
+    // ═══════════════════════════════════════════
     pickRandom: (arr) => arr[Math.floor(Math.random() * arr.length)],
+    randomInt:  (min, max) => Math.floor(Math.random() * (max - min + 1)) + min,
 
-    // ─── Random number between min-max ───
-    randomInt: (min, max) => Math.floor(Math.random() * (max - min + 1)) + min,
-
-    // ─── Format bytes to KB/MB/GB ───
+    // ═══════════════════════════════════════════
+    //  📏 FORMATTERS
+    // ═══════════════════════════════════════════
     formatBytes: (bytes) => {
         if (bytes === 0) return '0 B';
         const k = 1024;
@@ -22,7 +26,6 @@ const helper = {
         return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
     },
 
-    // ─── Format seconds to human readable ───
     formatUptime: (seconds) => {
         const d = Math.floor(seconds / 86400);
         const h = Math.floor((seconds % 86400) / 3600);
@@ -36,31 +39,31 @@ const helper = {
         return parts.join(' ') || '0s';
     },
 
-    // ─── Clean JID (remove device suffix) ───
+    // ═══════════════════════════════════════════
+    //  📱 JID HELPERS
+    // ═══════════════════════════════════════════
     cleanJid: (jid) => String(jid).split(':')[0].split('@')[0],
 
-    // ─── Convert number to JID ───
     toJid: (number) => {
         const clean = String(number).replace(/\D/g, '');
         return `${clean}@s.whatsapp.net`;
     },
 
-    // ─── Get sender number from msg ───
     getSender: (msg) => {
         const jid = msg.key.participant || msg.key.remoteJid;
         return helper.cleanJid(jid);
     },
 
-    // ─── Check if sender is owner ───
     isOwner: (sender) => {
         const num = helper.cleanJid(sender);
         return config.OWNER.some(jid => helper.cleanJid(jid) === num);
     },
 
-    // ─── Check if group ───
     isGroup: (jid) => String(jid).endsWith('@g.us'),
 
-    // ─── Get text from message ───
+    // ═══════════════════════════════════════════
+    //  📩 MESSAGE HELPERS
+    // ═══════════════════════════════════════════
     getText: (msg) => {
         const m = msg.message;
         if (!m) return '';
@@ -73,26 +76,90 @@ const helper = {
             || '';
     },
 
-    // ─── Get mentioned JIDs ───
     getMentions: (msg) => {
         return msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
     },
 
-    // ─── Is reply? ───
     getQuoted: (msg) => {
         return msg.message?.extendedTextMessage?.contextInfo?.quotedMessage || null;
     },
 
-    // ─── Sleep ───
     sleep: (ms) => new Promise(r => setTimeout(r, ms)),
 
-    // ─── Capitalize ───
     capitalize: (str) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase(),
 
-    // ─── Saba styled text ───
+    // ═══════════════════════════════════════════
+    //  🎨 SABA STYLED TEXT
+    // ═══════════════════════════════════════════
     sabaText: (title, body) => {
         return `╭─⬡ *${title}* ⬡─╮\n│\n${body.split('\n').map(l => `│ ${l}`).join('\n')}\n│\n╰──────────────╯\n> 💚 *Saba MD*`;
     },
+
+    // ═══════════════════════════════════════════
+    //  🖼️ IMAGE / ASSETS HELPERS (LOCAL FILES)
+    // ═══════════════════════════════════════════
+
+    // ─── Resolve relative → absolute path ───
+    resolvePath: (filePath) => {
+        if (!filePath) return null;
+        if (path.isAbsolute(filePath)) return filePath;
+        return path.join(process.cwd(), filePath);
+    },
+
+    // ─── Read image as Buffer ───
+    getImageBuffer: (imgPath) => {
+        try {
+            const abs = helper.resolvePath(imgPath);
+            if (!abs || !fs.existsSync(abs)) return null;
+            return fs.readFileSync(abs);
+        } catch {
+            return null;
+        }
+    },
+
+    // ─── Convenience getters ───
+    getLogoBuffer:   () => helper.getImageBuffer(config.BOT_LOGO),
+    getBannerBuffer: () => helper.getImageBuffer(config.BOT_BANNER),
+    getSabaBuffer:   () => helper.getImageBuffer(config.BOT_SABA),
+
+    // ─── Universal image sender ───
+    sendImage: async (sock, from, imgPath, caption, quotedMsg = null, mentions = []) => {
+        const buffer = helper.getImageBuffer(imgPath);
+        const opts = {};
+        if (quotedMsg) opts.quoted = quotedMsg;
+        if (mentions.length) opts.mentions = mentions;
+
+        if (buffer) {
+            try {
+                return await sock.sendMessage(from, {
+                    image: buffer,
+                    caption,
+                    ...opts
+                });
+            } catch {
+                // fallback
+            }
+        }
+        return await sock.sendMessage(from, { text: caption, ...opts });
+    },
+
+    // ─── Convenience senders ───
+    sendWithLogo:   (sock, from, cap, q, m = []) => helper.sendImage(sock, from, config.BOT_LOGO,   cap, q, m),
+    sendWithBanner: (sock, from, cap, q, m = []) => helper.sendImage(sock, from, config.BOT_BANNER, cap, q, m),
+    sendWithSaba:   (sock, from, cap, q, m = []) => helper.sendImage(sock, from, config.BOT_SABA,   cap, q, m),
+
+    // ─── Check image exists ───
+    imageExists: (imgPath) => {
+        const abs = helper.resolvePath(imgPath);
+        return Boolean(abs && fs.existsSync(abs));
+    },
+
+    // ─── Debug: list all assets ───
+    listAssets: () => ({
+        logo:   { path: config.BOT_LOGO,   exists: helper.imageExists(config.BOT_LOGO) },
+        banner: { path: config.BOT_BANNER, exists: helper.imageExists(config.BOT_BANNER) },
+        saba:   { path: config.BOT_SABA,   exists: helper.imageExists(config.BOT_SABA) },
+    }),
 };
 
 module.exports = helper;
