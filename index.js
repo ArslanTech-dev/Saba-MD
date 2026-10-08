@@ -17,7 +17,7 @@ const pino    = require('pino');
 const chalk   = require('chalk');
 const fs      = require('fs');
 const config  = require('./config');
-const { handleMessage } = require('./handlers/message');
+const { handleMessage, loadPlugins, setupEvents } = require('./handlers/message');
 const { requestPairingCode } = require('./pair');
 const { fancyLog } = require('./utils/logger');
 const helper = require('./utils/helper');
@@ -87,6 +87,10 @@ async function startBot() {
     });
 
     sock.ev.on('creds.update', saveCreds);
+
+    // ─── Load plugins & setup events ───
+    loadPlugins();
+    setupEvents(sock);
 
     // ===============================================
     //  🔌 CONNECTION UPDATE
