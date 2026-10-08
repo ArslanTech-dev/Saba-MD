@@ -1,20 +1,20 @@
 // ===============================================
 //  💚 SABA MD — GROUP SETTINGS (Shared)
-//  👨‍💻 Made by Arslan Tech's
+//  👨‍💻 Made by Arslan Tech's for Saba
 // ===============================================
 
 const settings = new Map();
 
-// ─── Default settings per group ───
 const DEFAULTS = {
-    antilink:    false,   // delete links
-    antilink_action: 'warn', // 'warn' | 'kick'
-    welcome:     false,   // welcome new members
-    goodbye:     false,   // goodbye on leave
-    mute:        false,   // mute group
-    antifake:    false,   // (future)
-    antispam:    false,   // (future)
-    antibot:     false,   // (future)
+    antilink:        false,
+    antilink_action: 'warn',
+    welcome:         false,
+    goodbye:         false,
+    mute:            false,
+    antidelete:      true,       // ← default ON in groups
+    antifake:        false,
+    antispam:        false,
+    antibot:         false,
 };
 
 function getSettings(jid) {
@@ -24,10 +24,7 @@ function getSettings(jid) {
     return settings.get(jid);
 }
 
-function saveSettings() {
-    // Future: Save to DB (utils/database.js)
-    // For now, in-memory only
-}
+function saveSettings() {}
 
 function resetSettings(jid) {
     settings.set(jid, { ...DEFAULTS });
