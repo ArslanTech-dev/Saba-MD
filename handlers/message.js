@@ -1,7 +1,8 @@
 // ===============================================
-//  💚 SABA MD — MESSAGE HANDLER + PLUGIN LOADER
+//  💚 SABA MD — MESSAGE HANDLER (FINAL)
 //  👨‍💻 Made by Arslan Tech's for Saba
-//  🎨 Royal Style · React · Antilink · Welcome
+//  🎨 Royal · React · Antilink · Antidelete · Welcome
+//  🔒 FINAL version — no more edits needed
 // ===============================================
 
 const fs   = require('fs-extra');
@@ -19,11 +20,48 @@ const plugins = new Map();
 const aliases = new Map();
 
 // ===============================================
-//  🎨 STYLE (shared with plugins)
+//  🎨 STYLE
 // ===============================================
 const TOP  = '─❍══ ⃟ ⃟ ⃟ ⃟ ⃟══⊷❍';
 const MID  = '━━━━━━━━━━━━━━━━━━';
+const THIN = '┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄';
 const BOT  = '─❍══ ⃟ ⃟ ⃟ ⃟ ⃟══⊷❍';
+
+// ===============================================
+//  💾 MESSAGE CACHE (for antidelete)
+// ===============================================
+const MESSAGE_CACHE = new Map();
+const CACHE_TTL = 60 * 60 * 1000;
+const CACHE_MAX = 5000;
+
+function cacheMessage(msg) {
+    try {
+        const id = msg.key.id;
+        if (!id) return;
+        MESSAGE_CACHE.set(id, {
+            msg,
+            from: msg.key.remoteJid,
+            sender: msg.key.participant || msg.key.remoteJid,
+            timestamp: Date.now(),
+        });
+        if (MESSAGE_CACHE.size > CACHE_MAX) {
+            const now = Date.now();
+            for (const [k, v] of MESSAGE_CACHE) {
+                if (now - v.timestamp > CACHE_TTL) MESSAGE_CACHE.delete(k);
+            }
+        }
+    } catch {}
+}
+
+function getCachedMessage(id) {
+    const entry = MESSAGE_CACHE.get(id);
+    if (!entry) return null;
+    if (Date.now() - entry.timestamp > CACHE_TTL) {
+        MESSAGE_CACHE.delete(id);
+        return null;
+    }
+    return entry;
+}
 
 // ===============================================
 //  🔄 LOAD ALL PLUGINS
@@ -38,7 +76,6 @@ function loadPlugins() {
     }
 
     const files = fs.readdirSync(pluginDir).filter(f => f.endsWith('.js'));
-
     if (files.length === 0) {
         fancyLog('WARN', 'No plugins found in plugins/');
         return;
@@ -52,7 +89,6 @@ function loadPlugins() {
             const pluginPath = path.join(pluginDir, file);
             delete require.cache[require.resolve(pluginPath)];
             const mod = require(pluginPath);
-
             const list = Array.isArray(mod) ? mod : [mod];
 
             for (const p of list) {
@@ -60,9 +96,7 @@ function loadPlugins() {
                     fancyLog('WARN', `Skipping invalid plugin: ${file}`);
                     continue;
                 }
-
                 plugins.set(p.name.toLowerCase(), p);
-
                 if (Array.isArray(p.aliases)) {
                     for (const a of p.aliases) {
                         aliases.set(a.toLowerCase(), p.name.toLowerCase());
@@ -86,7 +120,7 @@ const LINK_REGEX = /(https?:\/\/[^\s]+|www\.[^\s]+|chat\.whatsapp\.com\/[^\s]+|w
 
 function containsLink(text) {
     if (!text) return false;
-    LINK_REGEX.lastIndex = 0;   // reset regex state
+    LINK_REGEX.lastIndex = 0;
     return LINK_REGEX.test(text);
 }
 
@@ -101,31 +135,30 @@ function getMediaType(msg) {
     const m = msg.message;
     if (!m) return null;
 
-    if (m.imageMessage)      return { type: 'image',    data: m.imageMessage,    mimetype: m.imageMessage.mimetype };
-    if (m.videoMessage)      return { type: 'video',    data: m.videoMessage,    mimetype: m.videoMessage.mimetype };
-    if (m.audioMessage)      return { type: 'audio',    data: m.audioMessage,    mimetype: m.audioMessage.mimetype };
-    if (m.stickerMessage)    return { type: 'sticker',  data: m.stickerMessage,  mimetype: m.stickerMessage.mimetype };
-    if (m.documentMessage)   return { type: 'document', data: m.documentMessage, mimetype: m.documentMessage.mimetype };
-    if (m.contactMessage)    return { type: 'contact',  data: m.contactMessage };
-    if (m.locationMessage)   return { type: 'location', data: m.locationMessage };
-    if (m.viewOnceMessage)   return { type: 'viewonce', data: m.viewOnceMessage };
-    if (m.viewOnceMessageV2) return { type: 'viewonce', data: m.viewOnceMessageV2 };
-    if (m.buttonsResponseMessage) return { type: 'button',  data: m.buttonsResponseMessage };
-    if (m.listResponseMessage)    return { type: 'list',    data: m.listResponseMessage };
-    if (m.reactionMessage)        return { type: 'reaction',data: m.reactionMessage };
+    if (m.imageMessage)           return { type: 'image',    data: m.imageMessage,    mimetype: m.imageMessage.mimetype };
+    if (m.videoMessage)           return { type: 'video',    data: m.videoMessage,    mimetype: m.videoMessage.mimetype };
+    if (m.audioMessage)           return { type: 'audio',    data: m.audioMessage,    mimetype: m.audioMessage.mimetype };
+    if (m.stickerMessage)         return { type: 'sticker',  data: m.stickerMessage,  mimetype: m.stickerMessage.mimetype };
+    if (m.documentMessage)        return { type: 'document', data: m.documentMessage, mimetype: m.documentMessage.mimetype };
+    if (m.contactMessage)         return { type: 'contact',  data: m.contactMessage };
+    if (m.locationMessage)        return { type: 'location', data: m.locationMessage };
+    if (m.viewOnceMessage)        return { type: 'viewonce', data: m.viewOnceMessage };
+    if (m.viewOnceMessageV2)      return { type: 'viewonce', data: m.viewOnceMessageV2 };
+    if (m.buttonsResponseMessage) return { type: 'button',   data: m.buttonsResponseMessage };
+    if (m.listResponseMessage)    return { type: 'list',     data: m.listResponseMessage };
+    if (m.reactionMessage)        return { type: 'reaction', data: m.reactionMessage };
 
     return null;
 }
 
 // ===============================================
-//  📥 DOWNLOAD QUOTED MEDIA (helper for plugins)
+//  📥 DOWNLOAD QUOTED MEDIA
 // ===============================================
 async function downloadQuotedMedia(msg, type = 'image') {
     try {
         const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
         const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
         if (!quoted) return null;
-
         const mediaMsg = quoted[`${type}Message`];
         if (!mediaMsg) return null;
 
@@ -148,19 +181,16 @@ async function handleAntilink(sock, msg, from, sender, text) {
         const settings = getSettings(from);
         if (!settings.antilink) return false;
         if (!containsLink(text)) return false;
-
-        // Owner and admins are exempt
         if (helper.isOwner(sender)) return false;
 
-        // Get group metadata to check admin
         const meta = await sock.groupMetadata(from);
+
         const isSenderAdmin = meta.participants.some(p =>
             helper.cleanJid(p.id) === helper.cleanJid(sender) &&
             (p.admin === 'admin' || p.admin === 'superadmin')
         );
         if (isSenderAdmin) return false;
 
-        // Bot must be admin to delete
         const botJid = sock.user?.id?.split(':')[0] + '@s.whatsapp.net';
         const isBotAdmin = meta.participants.some(p =>
             helper.cleanJid(p.id) === helper.cleanJid(botJid) &&
@@ -168,12 +198,8 @@ async function handleAntilink(sock, msg, from, sender, text) {
         );
         if (!isBotAdmin) return false;
 
-        // Delete the message
-        await sock.sendMessage(from, {
-            delete: msg.key
-        });
+        await sock.sendMessage(from, { delete: msg.key });
 
-        // Warn the user
         const action = settings.antilink_action || 'warn';
         const caption =
 `${TOP}
@@ -194,7 +220,6 @@ ${BOT}`;
             mentions: [msg.key.participant || msg.key.remoteJid]
         });
 
-        // If action is kick, kick them
         if (action === 'kick') {
             await sock.groupParticipantsUpdate(from, [sender], 'remove');
         }
@@ -208,6 +233,116 @@ ${BOT}`;
 }
 
 // ===============================================
+//  🗑️ ANTIDELETE HANDLER
+// ===============================================
+async function handleAntidelete(sock, updates) {
+    try {
+        for (const u of updates) {
+            const isDeleted =
+                u.update?.message === null ||
+                u.update?.messageStubType === 1 ||
+                u.update?.messageStubParameters?.[0] === 'Message deleted';
+
+            if (!isDeleted) continue;
+
+            const msgId = u.key?.id;
+            if (!msgId) continue;
+
+            const cached = getCachedMessage(msgId);
+            if (!cached) continue;
+
+            const { msg: originalMsg, from, sender } = cached;
+            const isGroup = helper.isGroup(from);
+
+            let antideleteOn = false;
+            if (isGroup) {
+                const settings = getSettings(from);
+                antideleteOn = settings.antidelete === true;
+            } else {
+                antideleteOn = config.ANTIDELETE_DM === true;
+            }
+
+            if (!antideleteOn) continue;
+            if (helper.isOwner(sender)) continue;
+            if (originalMsg.key.fromMe) continue;
+
+            const media = getMediaType(originalMsg);
+            const text = helper.getText(originalMsg);
+
+            const header =
+`${TOP}
+   🗑️ *ANTI-DELETE*
+${MID}
+   👤 *Sender* : @${helper.cleanJid(sender)}
+   📍 *Chat*   : ${isGroup ? 'Group' : 'DM'}
+   🕒 *Time*   : ${new Date().toLocaleTimeString(config.TIMEZONE)}
+${MID}
+   📝 *Deleted Message:*
+${THIN}`;
+
+            const mentions = [sender];
+
+            try {
+                if (text) {
+                    await sock.sendMessage(from, {
+                        text: `${header}\n   ${text}\n${MID}\n   💖 *Saba MD — Arslan Tech's*\n${BOT}`,
+                        mentions,
+                    });
+                }
+
+                if (media && media.type) {
+                    const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
+
+                    if (['image', 'video', 'audio', 'sticker', 'document'].includes(media.type)) {
+                        try {
+                            const stream = await downloadContentFromMessage(media.data, media.type);
+                            let buffer = Buffer.from([]);
+                            for await (const chunk of stream) {
+                                buffer = Buffer.concat([buffer, chunk]);
+                            }
+
+                            if (buffer.length > 0) {
+                                const caption = media.data.caption
+                                    ? `${header}\n   ${media.data.caption}\n${MID}\n   💖 *Saba MD*\n${BOT}`
+                                    : `${header}\n   [${media.type.toUpperCase()}]\n${MID}\n   💖 *Saba MD*\n${BOT}`;
+
+                                const payload = { caption, mentions };
+                                if (media.type === 'image')    payload.image = buffer;
+                                if (media.type === 'video')    payload.video = buffer;
+                                if (media.type === 'audio')    { payload.audio = buffer; payload.mimetype = 'audio/mp4'; }
+                                if (media.type === 'sticker')  payload.sticker = buffer;
+                                if (media.type === 'document') {
+                                    payload.document = buffer;
+                                    payload.mimetype = media.mimetype || 'application/octet-stream';
+                                    payload.fileName = media.data.fileName || 'file';
+                                }
+
+                                await sock.sendMessage(from, payload);
+                            }
+                        } catch (err) {
+                            fancyLog('ERROR', `Antidelete media: ${err.message}`);
+                        }
+                    } else if (media.type === 'viewonce') {
+                        await sock.sendMessage(from, {
+                            text: `${header}\n   [VIEW-ONCE MEDIA]\n${MID}\n   💖 *Saba MD*\n${BOT}`,
+                            mentions,
+                        });
+                    }
+                }
+
+                fancyLog('SUCCESS', `Antidelete triggered — ${msgId}`);
+            } catch (err) {
+                fancyLog('ERROR', `Antidelete send: ${err.message}`);
+            }
+
+            MESSAGE_CACHE.delete(msgId);
+        }
+    } catch (err) {
+        fancyLog('ERROR', `handleAntidelete: ${err.message}`);
+    }
+}
+
+// ===============================================
 //  👋 WELCOME / GOODBYE HANDLER
 // ===============================================
 async function handleGroupParticipants(sock, update) {
@@ -217,7 +352,6 @@ async function handleGroupParticipants(sock, update) {
 
         const settings = getSettings(id);
 
-        // ─── Welcome ───
         if (action === 'add' && settings.welcome) {
             try {
                 const meta = await sock.groupMetadata(id);
@@ -237,7 +371,6 @@ ${MID}
 ${MID}
    💖 *Saba MD — Arslan Tech's*
 ${BOT}`;
-
                     await helper.sendWithLogo(sock, id, caption, null, [jid]);
                 }
             } catch (err) {
@@ -245,7 +378,6 @@ ${BOT}`;
             }
         }
 
-        // ─── Goodbye ───
         if (action === 'remove' && settings.goodbye) {
             try {
                 const meta = await sock.groupMetadata(id);
@@ -263,7 +395,6 @@ ${MID}
 ${MID}
    💖 *Saba MD — Arslan Tech's*
 ${BOT}`;
-
                     await helper.sendWithLogo(sock, id, caption, null, [jid]);
                 }
             } catch (err) {
@@ -284,28 +415,9 @@ async function handleReaction(sock, reactions) {
             const reaction = r.reaction?.text;
             if (!reaction) continue;
             fancyLog('MESSAGE', `Reaction: ${reaction} on ${r.key.id}`);
-            // Future: react to reactions, log to DB, etc.
         }
     } catch (err) {
         fancyLog('ERROR', `Reaction: ${err.message}`);
-    }
-}
-
-// ===============================================
-//  🗑️ MESSAGE UPDATE HANDLER (edit/delete)
-// ===============================================
-async function handleMessageUpdate(sock, updates) {
-    try {
-        for (const u of updates) {
-            // Future: detect deleted messages, edited messages
-            // For now, just log
-            if (u.update?.message === null) {
-                // Message was deleted
-                // fancyLog('DEBUG', `Message deleted: ${u.key.id}`);
-            }
-        }
-    } catch (err) {
-        fancyLog('ERROR', `MessageUpdate: ${err.message}`);
     }
 }
 
@@ -323,10 +435,12 @@ async function handleMessage(sock, msg) {
         const text    = helper.getText(msg);
         const isOwner = helper.isOwner(sender);
 
-        // ─── Ignore status broadcast ───
         if (from === 'status@broadcast') return;
 
-        // ─── ANTILINK CHECK (before anything else) ───
+        // ─── CACHE (for antidelete) ───
+        cacheMessage(msg);
+
+        // ─── ANTILINK ───
         if (isGroup && text && !isOwner) {
             const blocked = await handleAntilink(sock, msg, from, sender, text);
             if (blocked) return;
@@ -334,7 +448,6 @@ async function handleMessage(sock, msg) {
 
         if (!text) return;
 
-        // ─── Prefix check ───
         const prefix = config.PREFIX;
         if (!text.startsWith(prefix)) return;
 
@@ -345,35 +458,30 @@ async function handleMessage(sock, msg) {
         const cmdRaw = parts[0].toLowerCase();
         const args = parts.slice(1);
 
-        // ─── Find plugin ───
         let plugin = plugins.get(cmdRaw);
         if (!plugin && aliases.has(cmdRaw)) {
             plugin = plugins.get(aliases.get(cmdRaw));
         }
         if (!plugin) return;
 
-        // ─── Owner check ───
         if (plugin.ownerOnly && !isOwner) {
             return sock.sendMessage(from, {
                 text: `${TOP}\n   ❌ *ACCESS DENIED*\n${MID}\n   👑 Owner only command\n${BOT}`
             }, { quoted: msg });
         }
 
-        // ─── Group-only check ───
         if (plugin.groupOnly && !isGroup) {
             return sock.sendMessage(from, {
                 text: `${TOP}\n   ❌ *GROUP ONLY*\n${MID}\n   👥 Use in a group\n${BOT}`
             }, { quoted: msg });
         }
 
-        // ─── Private-only check ───
         if (plugin.privateOnly && isGroup) {
             return sock.sendMessage(from, {
                 text: `${TOP}\n   ❌ *PRIVATE ONLY*\n${MID}\n   💬 Use in DM\n${BOT}`
             }, { quoted: msg });
         }
 
-        // ─── Admin check ───
         if (plugin.adminOnly && isGroup && !isOwner) {
             try {
                 const meta = await sock.groupMetadata(from);
@@ -389,7 +497,6 @@ async function handleMessage(sock, msg) {
             } catch {}
         }
 
-        // ─── Cooldown ───
         const cooldownMs = plugin.cooldown ?? config.cmdCooldown ?? 3000;
         if (cooldownMs > 0 && !isOwner) {
             const wait = isOnCooldown(sender, plugin.name, cooldownMs);
@@ -400,46 +507,34 @@ async function handleMessage(sock, msg) {
             }
         }
 
-        // ─── Log ───
         fancyLog('COMMAND', `.${plugin.name} ${args.join(' ')} — ${sender}`);
 
-        // ─── Auto read ───
         if (config.autoRead) {
             try { await sock.readMessages([msg.key]); } catch {}
         }
 
-        // ─── Auto typing (DM only) ───
         if (config.autoTyping && !isGroup) {
             try { await sock.sendPresenceUpdate('composing', from); } catch {}
         }
 
-        // ─── Build context ───
         const ctx = {
-            // Core
             sock, msg, from, sender, isGroup, isOwner,
             args, text, command: plugin.name, prefix,
-
-            // Config & helpers
             config, helper, plugins,
 
-            // Media info
             media: getMediaType(msg),
             hasMedia: Boolean(getMediaType(msg)),
 
-            // Shortcuts
             reply: (t, opts = {}) => sock.sendMessage(from, { text: t, ...opts }, { quoted: msg }),
             react: (emoji) => sock.sendMessage(from, { react: { text: emoji, key: msg.key } }).catch(() => {}),
             send: (content, opts = {}) => sock.sendMessage(from, content, { quoted: msg, ...opts }),
 
-            // Media helpers
             downloadQuotedMedia: (type) => downloadQuotedMedia(msg, type),
 
-            // Group helpers
             getSettings: () => getSettings(from),
             saveSettings,
         };
 
-        // ─── Run plugin ───
         try {
             await plugin.run(ctx);
         } catch (err) {
@@ -455,25 +550,22 @@ async function handleMessage(sock, msg) {
 }
 
 // ===============================================
-//  ⚙️ EVENT SETUP — Called from index.js
+//  ⚙️ EVENT SETUP
 // ===============================================
 function setupEvents(sock) {
-    // Welcome/Goodbye
     sock.ev.on('group-participants.update', (update) => {
         handleGroupParticipants(sock, update);
     });
 
-    // Reactions
     sock.ev.on('messages.reaction', (reactions) => {
         handleReaction(sock, reactions);
     });
 
-    // Message updates (edit/delete detection)
     sock.ev.on('messages.update', (updates) => {
-        handleMessageUpdate(sock, updates);
+        handleAntidelete(sock, updates);
     });
 
-    fancyLog('INFO', '✅ Group events registered (welcome/goodbye/reactions)');
+    fancyLog('INFO', '✅ Events registered (welcome/goodbye/antidelete/reactions)');
 }
 
 // ===============================================
@@ -485,12 +577,13 @@ module.exports = {
     setupEvents,
     plugins,
     aliases,
-    // Helpers for external use
     containsLink,
     isGroupLink,
     getMediaType,
     downloadQuotedMedia,
     handleGroupParticipants,
+    handleAntidelete,
     handleReaction,
-    handleMessageUpdate,
+    cacheMessage,
+    getCachedMessage,
 };
