@@ -501,56 +501,11 @@ muskurahat chaand jaisi. 🌙✨"
 
 ---
 
-# ⚠️ Zaroori — Images Check Karo
 
-README mein 3 images use hui hain:
-- ✅ `./assets/logo.png`
-- ✅ `./assets/banner.png`
-- ✅ `./assets/saba.png`
 
-**Teeno already tere repo mein hain** ✅
 
----
 
-# 📤 Push Karo
 
-```bash
-git add README.md
-git commit -m "💚 Add README.md — with logo, banner, animations, dedicated to Saba"
-git push
-```
-
----
-
-# 🎯 README Kaisa Dikhega
-
-**GitHub pe open karne pe:**
-
-1. **Top:** Round logo with green glow
-2. **Title:** Animated typing "SABA MD 💚"
-3. **Subtitle:** Animated typing
-4. **Badges:** Version, Node, Stars, etc.
-5. **Banner:** Full-width banner image
-6. **Coding GIF:** Animated coding
-7. **Dedication:** Saba's image + romantic message + animated typing
-8. **Features:** Grid layout
-9. **Menu Preview:** Code block
-10. **Categories:** Table
-11. **Installation:** Steps
-12. **Deploy:** Badges
-13. **Tech Stack:** Skill icons
-14. **Stats:** GitHub stats
-15. **Snake:** Contributions
-16. **License**
-17. **Footer:** Animated with Saba image
-
----
-
-# 🎨 Extra — GitHub Profile README
-
-Agar tu chahta hai yeh README **aur bhi premium** dikhe, to GitHub profile pe yeh add kar:
-
-**GitHub Profile README** (`ArslanTech-dev/ArslanTech-dev/README.md`):
 
 ```markdown
 <div align="center">
