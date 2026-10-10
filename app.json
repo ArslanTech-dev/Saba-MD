@@ -1,0 +1,115 @@
+{
+  "name": "Saba MD",
+  "description": "💚 Ultra Advanced WhatsApp Multi-Device Bot — Made by Arslan Tech's for Saba",
+  "repository": "https://github.com/ArslanTech-dev/Saba-MD",
+  "logo": "https://raw.githubusercontent.com/ArslanTech-dev/Saba-MD/main/assets/logo.png",
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "baileys",
+    "multi-device",
+    "saba-md",
+    "arslan-tech"
+  ],
+  "website": "https://github.com/ArslanTech-dev/Saba-MD",
+  "success_url": "/",
+  "scripts": {
+    "postdeploy": "echo '✅ Saba MD deployed successfully!'"
+  },
+  "env": {
+    "BOT_NAME": {
+      "description": "Bot display name",
+      "value": "Saba MD",
+      "required": false
+    },
+    "VERSION": {
+      "description": "Bot version",
+      "value": "1.0.0",
+      "required": false
+    },
+    "PREFIX": {
+      "description": "Command prefix",
+      "value": ".",
+      "required": false
+    },
+    "OWNER_NAME": {
+      "description": "Owner's display name",
+      "value": "Saba",
+      "required": false
+    },
+    "OWNER_NUMBER": {
+      "description": "Owner WhatsApp number (with country code, no +)",
+      "value": "923001234567",
+      "required": true
+    },
+    "SESSION_NAME": {
+      "description": "Session folder name",
+      "value": "session",
+      "required": false
+    },
+    "PUBLIC_PAIRING": {
+      "description": "Allow public pairing via website (true/false)",
+      "value": "true",
+      "required": false
+    },
+    "PAIRING_NUMBER": {
+      "description": "Fixed pairing number (only if PUBLIC_PAIRING=false)",
+      "value": "",
+      "required": false
+    },
+    "ANTI_CALL": {
+      "description": "Reject incoming calls (true/false)",
+      "value": "false",
+      "required": false
+    },
+    "AUTO_BLOCK_CALL": {
+      "description": "Auto-block callers (true/false)",
+      "value": "false",
+      "required": false
+    },
+    "ANTIDELETE_DM": {
+      "description": "Enable antidelete in DMs (true/false)",
+      "value": "false",
+      "required": false
+    },
+    "TZ": {
+      "description": "Timezone",
+      "value": "Asia/Karachi",
+      "required": false
+    },
+    "OPENAI_API_KEY": {
+      "description": "OpenAI API key (for AI commands)",
+      "value": "",
+      "required": false
+    },
+    "UNSPLASH_ACCESS_KEY": {
+      "description": "Unsplash access key (for wallpaper commands)",
+      "value": "",
+      "required": false
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "image": "heroku/nodejs",
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    },
+    {
+      "url": "https://github.com/jonathanong/heroku-buildpack-ffmpeg-latest.git"
+    }
+  ],
+  "stack": "heroku-22",
+  "addons": [],
+  "environments": {
+    "test": {
+      "scripts": {
+        "test": "echo 'No tests configured'"
+      }
+    }
+  }
+}
