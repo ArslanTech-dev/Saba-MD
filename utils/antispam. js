@@ -1,5 +1,5 @@
 // ===============================================
-//  💚 SABA MD — ANTI-SPAM / COOLDOWN
+//  💚 SABA MDx — ANTI-SPAM / COOLDOWN
 // ===============================================
 
 const cooldowns = new Map();
