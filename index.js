@@ -89,7 +89,6 @@ async function startBot() {
 
     sock.ev.on('creds.update', saveCreds);
 
-    // ─── Load plugins & setup events ───
     loadPlugins();
     setupEvents(sock);
 
@@ -113,7 +112,6 @@ async function startBot() {
             }
         }
 
-        // ─── CLOSE ───
         if (connection === 'close') {
             reconnecting = false;
             connectionState = 'disconnected';
@@ -141,7 +139,6 @@ async function startBot() {
             }
         }
 
-        // ─── OPEN ───
         else if (connection === 'open') {
             reconnecting = false;
             connectionState = 'connected';
@@ -159,7 +156,6 @@ async function startBot() {
 
             fancyLog('SUCCESS', `💚 ${global.BOT_NAME} is online!`);
 
-            // ─── WELCOME MESSAGE (with SABA.png) ───
             const ownerJid = config.OWNER[0];
             if (ownerJid) {
                 try {
@@ -176,7 +172,7 @@ async function startBot() {
 ┃  🧠 *Version*   : ${global.VERSION}
 ┃  👑 *Owner*     : ${global.OWNER_NAME}
 ┃  🌐 *Prefix*    : ${global.PREFIX}
-┃  🕒 *Time*      : ${new Date().toLocaleString(config.TIMEZONE)}
+┃  🕒 *Time*      : ${helper.now()}
 ┃  ⏱️ *Uptime*    : ${uptimeSec}s
 ┃  📦 *Session*   : Active
 ┃
@@ -198,9 +194,6 @@ async function startBot() {
         }
     });
 
-    // ===============================================
-    //  📩 MESSAGE HANDLER
-    // ===============================================
     sock.ev.on('messages.upsert', async (m) => {
         try {
             const msg = m.messages[0];
@@ -211,9 +204,6 @@ async function startBot() {
         }
     });
 
-    // ===============================================
-    //  ☎️ ANTI-CALL
-    // ===============================================
     if (config.ANTI_CALL) {
         sock.ev.on('CB:call', async (json) => {
             try {
@@ -324,10 +314,8 @@ process.on('SIGINT', () => {
 //  ▶️ BOOT — Server + Bot Dono Start
 // ===============================================
 if (require.main === module) {
-    // ─── 1. Pairing website start karo ───
     startServer();
 
-    // ─── 2. Bot start karo ───
     startBot().catch((err) => {
         fancyLog('ERROR', `Start failed: ${err.message}`);
     });
