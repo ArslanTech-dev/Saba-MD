@@ -10,6 +10,33 @@ const config = require('../config');
 const helper = {
 
     // ═══════════════════════════════════════════
+    //  🕒 SAFE TIME HELPERS (Termux compatible)
+    // ═══════════════════════════════════════════
+    now: () => {
+        try {
+            return new Date().toLocaleString('en-US', { timeZone: config.TIMEZONE });
+        } catch {
+            return new Date().toLocaleString();
+        }
+    },
+
+    nowTime: () => {
+        try {
+            return new Date().toLocaleTimeString('en-US', { timeZone: config.TIMEZONE });
+        } catch {
+            return new Date().toLocaleTimeString();
+        }
+    },
+
+    nowDate: () => {
+        try {
+            return new Date().toLocaleDateString('en-US', { timeZone: config.TIMEZONE });
+        } catch {
+            return new Date().toLocaleDateString();
+        }
+    },
+
+    // ═══════════════════════════════════════════
     //  🎲 RANDOM / GENERAL
     // ═══════════════════════════════════════════
     pickRandom: (arr) => arr[Math.floor(Math.random() * arr.length)],
@@ -96,17 +123,14 @@ const helper = {
     },
 
     // ═══════════════════════════════════════════
-    //  🖼️ IMAGE / ASSETS HELPERS (LOCAL FILES)
+    //  🖼️ IMAGE / ASSETS HELPERS
     // ═══════════════════════════════════════════
-
-    // ─── Resolve relative → absolute path ───
     resolvePath: (filePath) => {
         if (!filePath) return null;
         if (path.isAbsolute(filePath)) return filePath;
         return path.join(process.cwd(), filePath);
     },
 
-    // ─── Read image as Buffer ───
     getImageBuffer: (imgPath) => {
         try {
             const abs = helper.resolvePath(imgPath);
@@ -117,12 +141,10 @@ const helper = {
         }
     },
 
-    // ─── Convenience getters ───
     getLogoBuffer:   () => helper.getImageBuffer(config.BOT_LOGO),
     getBannerBuffer: () => helper.getImageBuffer(config.BOT_BANNER),
     getSabaBuffer:   () => helper.getImageBuffer(config.BOT_SABA),
 
-    // ─── Universal image sender ───
     sendImage: async (sock, from, imgPath, caption, quotedMsg = null, mentions = []) => {
         const buffer = helper.getImageBuffer(imgPath);
         const opts = {};
@@ -136,25 +158,20 @@ const helper = {
                     caption,
                     ...opts
                 });
-            } catch {
-                // fallback
-            }
+            } catch {}
         }
         return await sock.sendMessage(from, { text: caption, ...opts });
     },
 
-    // ─── Convenience senders ───
     sendWithLogo:   (sock, from, cap, q, m = []) => helper.sendImage(sock, from, config.BOT_LOGO,   cap, q, m),
     sendWithBanner: (sock, from, cap, q, m = []) => helper.sendImage(sock, from, config.BOT_BANNER, cap, q, m),
     sendWithSaba:   (sock, from, cap, q, m = []) => helper.sendImage(sock, from, config.BOT_SABA,   cap, q, m),
 
-    // ─── Check image exists ───
     imageExists: (imgPath) => {
         const abs = helper.resolvePath(imgPath);
         return Boolean(abs && fs.existsSync(abs));
     },
 
-    // ─── Debug: list all assets ───
     listAssets: () => ({
         logo:   { path: config.BOT_LOGO,   exists: helper.imageExists(config.BOT_LOGO) },
         banner: { path: config.BOT_BANNER, exists: helper.imageExists(config.BOT_BANNER) },
