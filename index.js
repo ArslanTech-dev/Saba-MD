@@ -17,6 +17,7 @@ const pino    = require('pino');
 const chalk   = require('chalk');
 const fs      = require('fs');
 const config  = require('./config');
+const { startServer } = require('./server');
 const { handleMessage, loadPlugins, setupEvents } = require('./handlers/message');
 const { requestPairingCode } = require('./pair');
 const { fancyLog } = require('./utils/logger');
@@ -320,9 +321,13 @@ process.on('SIGINT', () => {
 });
 
 // ===============================================
-//  ▶️ BOOT
+//  ▶️ BOOT — Server + Bot Dono Start
 // ===============================================
 if (require.main === module) {
+    // ─── 1. Pairing website start karo ───
+    startServer();
+
+    // ─── 2. Bot start karo ───
     startBot().catch((err) => {
         fancyLog('ERROR', `Start failed: ${err.message}`);
     });
