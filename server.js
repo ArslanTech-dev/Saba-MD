@@ -1,6 +1,6 @@
 // ===============================================
-//  💚 SABA MD — EXPRESS SERVER + PAIRING API
-//  👨‍💻 Made by Arslan Tech's
+//  💚 SABA MD — Express Server + Pairing API
+//  👨‍💻 Made by Arslan Tech's for Saba
 // ===============================================
 
 const express = require('express');
@@ -26,56 +26,39 @@ app.use((req, res, next) => {
 });
 
 // ===============================================
-//  🌐 HOME — Pairing Website
+//  🌐 HOME
 // ===============================================
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // ===============================================
-//  🔑 POST /api/pair — Generate Pairing Code
+//  🔑 POST /api/pair
 // ===============================================
 app.post('/api/pair', async (req, res) => {
     const { number } = req.body || {};
 
-    // ─── Validation ───
     if (!number) {
-        return res.status(400).json({
-            success: false,
-            error: 'Phone number is required.',
-        });
+        return res.status(400).json({ success: false, error: 'Phone number is required.' });
     }
 
     const cleanNumber = String(number).replace(/\D/g, '');
 
     if (cleanNumber.length < 10 || cleanNumber.length > 15) {
-        return res.status(400).json({
-            success: false,
-            error: 'Invalid number. Include country code (e.g. 923001234567).',
-        });
+        return res.status(400).json({ success: false, error: 'Invalid number.' });
     }
 
     try {
-        // ─── Lazy require (circular dep avoid) ───
         const { createPairingCode, getBotStatus } = require('./index');
-
-        // ─── Check if already connected ───
         const status = getBotStatus();
+
         if (status.connected) {
-            return res.status(400).json({
-                success: false,
-                error: 'Bot is already connected to WhatsApp.',
-            });
+            return res.status(400).json({ success: false, error: 'Bot already connected.' });
         }
-
         if (!status.pairingAvailable) {
-            return res.status(503).json({
-                success: false,
-                error: 'Pairing is not available yet. Try again in a few seconds.',
-            });
+            return res.status(503).json({ success: false, error: 'Pairing not available yet.' });
         }
 
-        // ─── Generate code ───
         fancyLog('PAIRING', `Code requested for ${cleanNumber}`);
         const code = await createPairingCode(cleanNumber);
 
@@ -84,36 +67,25 @@ app.post('/api/pair', async (req, res) => {
             code,
             number: cleanNumber,
             expiresIn: 45,
-            message: 'Code generated. Enter it in WhatsApp → Linked Devices.',
         });
-
     } catch (err) {
         fancyLog('ERROR', `Pair API: ${err.message}`);
 
-        // Busy case
         if (err.code === 'PAIRING_BUSY') {
-            return res.status(429).json({
-                success: false,
-                error: err.message,
-                retryAfter: 45,
-            });
+            return res.status(429).json({ success: false, error: err.message, retryAfter: 45 });
         }
 
-        return res.status(500).json({
-            success: false,
-            error: err.message || 'Pairing failed. Try again.',
-        });
+        return res.status(500).json({ success: false, error: err.message || 'Pairing failed.' });
     }
 });
 
 // ===============================================
-//  📊 GET /api/status — Bot Status
+//  📊 GET /api/status
 // ===============================================
 app.get('/api/status', (req, res) => {
     try {
         const { getBotStatus } = require('./index');
         const status = getBotStatus();
-
         res.json({
             success: true,
             bot: status.name,
@@ -122,9 +94,10 @@ app.get('/api/status', (req, res) => {
             connected: status.connected,
             pairingAvailable: status.pairingAvailable,
             publicPairing: status.publicPairing,
+            uptimeSeconds: status.uptimeSeconds,
             uptime: status.uptimeSeconds,
             memory: status.memory,
-            node: status.nodeVersion,
+            nodeVersion: status.nodeVersion,
         });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
@@ -132,7 +105,7 @@ app.get('/api/status', (req, res) => {
 });
 
 // ===============================================
-//  ❤️ GET /health — Uptime Robot / Render
+//  ❤️ GET /health
 // ===============================================
 app.get('/health', (req, res) => {
     try {
@@ -151,22 +124,7 @@ app.get('/health', (req, res) => {
 });
 
 // ===============================================
-//  🎨 GET /api/config — Frontend Config
-// ===============================================
-app.get('/api/config', (req, res) => {
-    res.json({
-        botName:    config.BOT_NAME,
-        botLogo:    config.BOT_LOGO,
-        version:    config.VERSION,
-        tagline:    config.WEBSITE?.tagline || 'Connect your WhatsApp in seconds.',
-        github:     config.WEBSITE?.github || '',
-        accent:     config.WEBSITE?.accent || '#25D366',
-        publicPairing: config.PUBLIC_PAIRING,
-    });
-});
-
-// ===============================================
-//  🚫 404 — Unknown routes
+//  🚫 404
 // ===============================================
 app.use((req, res) => {
     if (req.path.startsWith('/api/')) {
@@ -176,7 +134,7 @@ app.use((req, res) => {
 });
 
 // ===============================================
-//  🛡️ GLOBAL ERROR HANDLER
+//  🛡️ GLOBAL ERROR
 // ===============================================
 app.use((err, req, res, next) => {
     fancyLog('ERROR', `Server: ${err.message}`);
@@ -184,16 +142,16 @@ app.use((err, req, res, next) => {
 });
 
 // ===============================================
-//  ▶️ START SERVER
+//  ▶️ START SERVER — Bonto/Render compatible
 // ===============================================
 function startServer() {
-    const port = config.PORT || 3000;
+    const port = process.env.PORT || 3000;
 
-    const server = app.listen(port, () => {
-        fancyLog('SUCCESS', `🌐 Pairing website: http://localhost:${port}`);
-        fancyLog('INFO',    `🔗 Pair API:        http://localhost:${port}/api/pair`);
-        fancyLog('INFO',    `📊 Status:          http://localhost:${port}/api/status`);
-        fancyLog('INFO',    `❤️  Health:          http://localhost:${port}/health`);
+    const server = app.listen(port, '0.0.0.0', () => {
+        fancyLog('SUCCESS', `🌐 Pairing website running on port ${port}`);
+        fancyLog('INFO',    `🔗 Pair API:  /api/pair`);
+        fancyLog('INFO',    `📊 Status:    /api/status`);
+        fancyLog('INFO',    `❤️  Health:    /health`);
     });
 
     server.on('error', (err) => {
@@ -207,7 +165,4 @@ function startServer() {
     return server;
 }
 
-// ===============================================
-//  📤 EXPORTS
-// ===============================================
 module.exports = { app, startServer };
