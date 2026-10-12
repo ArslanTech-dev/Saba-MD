@@ -56,6 +56,48 @@ let reconnectAttempts  = 0;
 const startedAt        = Date.now();
 
 // ===============================================
+//  🎨 WELCOME MESSAGE BUILDER (WhatsApp Style)
+// ===============================================
+function buildWelcomeCaption() {
+    const uptimeSec = Math.floor((Date.now() - startedAt) / 1000);
+    const ownerNum = config.OWNER[0].split('@')[0];
+    const mode = config.PUBLIC_PAIRING ? 'Public' : 'Private';
+
+    return `💚 *${global.BOT_NAME}* is now online!
+
+━━━━━━━━━━━━━━━━━━
+
+👋 *Welcome back, ${global.OWNER_NAME}!*
+
+Your WhatsApp bot is successfully connected and ready to serve. All systems are running smoothly.
+
+━━━━━━━━━━━━━━━━━━
+
+📋 *Bot Information*
+
+• 🤖 *Bot Name* : ${global.BOT_NAME}
+• 🧠 *Version*  : ${global.VERSION}
+• 👑 *Owner*    : ${global.OWNER_NAME}
+• 📱 *Number*   : +${ownerNum}
+• 🌐 *Prefix*   : ${global.PREFIX}
+• 🔓 *Mode*     : ${mode}
+• ⏱️ *Uptime*   : ${uptimeSec}s
+
+━━━━━━━━━━━━━━━━━━
+
+⚡ *Quick Start*
+
+• Type *${global.PREFIX}menu* to see all commands
+• Type *${global.PREFIX}help* for assistance
+• Type *${global.PREFIX}ping* to test the bot
+
+━━━━━━━━━━━━━━━━━━
+
+> 💚 *Powered by Arslan Tech's*
+> 🎀 *Made with love for Saba*`;
+}
+
+// ===============================================
 //  🚀 START BOT
 // ===============================================
 async function startBot() {
@@ -149,44 +191,23 @@ async function startBot() {
 
             if (config.PUBLIC_PAIRING && sock.user?.id) {
                 const connectedId = String(sock.user.id).split(':')[0];
-                config.OWNER = [connectedId.includes('@') ? connectedId : `${connectedId}@s.whatsapp.net`];
+                config.OWNER = [connectedId.includes('@') ? connectedId : `${connectedId}@whatsapp.net`];
                 global.OWNER = config.OWNER;
                 fancyLog('INFO', `Owner set to ${config.OWNER[0]}`);
             }
 
             fancyLog('SUCCESS', `💚 ${global.BOT_NAME} is online!`);
 
+            // ─── WELCOME MESSAGE (with LOGO.png) ───
             const ownerJid = config.OWNER[0];
             if (ownerJid) {
                 try {
-                    const uptimeSec = Math.floor((Date.now() - startedAt) / 1000);
+                    const caption = buildWelcomeCaption();
 
-                    const welcomeCaption =
-`╭━━━❰ *${global.BOT_NAME}* ❱━━━╮
-┃
-┃   💚 *Welcome back, ${global.OWNER_NAME}!*
-┃
-┣━━━━━━━━━━━━━━━━━━━━━━
-┃
-┃  ⚡ *Status*    : Online ✅
-┃  🧠 *Version*   : ${global.VERSION}
-┃  👑 *Owner*     : ${global.OWNER_NAME}
-┃  🌐 *Prefix*    : ${global.PREFIX}
-┃  🕒 *Time*      : ${helper.now()}
-┃  ⏱️ *Uptime*    : ${uptimeSec}s
-┃  📦 *Session*   : Active
-┃
-┣━━━━━━━━━━━━━━━━━━━━━━
-┃
-┃  🔗 Send *${global.PREFIX}menu* to see all commands
-┃
-╰━━━━━━━━━━━━━━━━━━━━━━╯
+                    // Use LOGO.png (not saba.png)
+                    await helper.sendWithLogo(sock, ownerJid, caption);
 
-> 💖 *Made with love by Arslan Tech's*
-> 🎀 *For Saba*`;
-
-                    await helper.sendWithSaba(sock, ownerJid, welcomeCaption);
-                    fancyLog('SUCCESS', '💚 Welcome message (with Saba image) sent.');
+                    fancyLog('SUCCESS', '💚 Welcome message sent with logo.');
                 } catch (err) {
                     fancyLog('WARN', `Could not send welcome message: ${err.message}`);
                 }
