@@ -2,1166 +2,1179 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <meta name="theme-color" content="#1a0a0f" />
-<meta name="description" content="Saba MD 💚 — A lovely pairing console for Saba." />
-<title>Saba MD 💚 — For Saba</title>
+<title>Saba MD 💚 — Multi-User Dashboard</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💚</text></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Dancing+Script:wght@500;600;700&display=swap" rel="stylesheet">
+
 <style>
-    @import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Dancing+Script:wght@500;600;700&display=swap");
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 
-    :root {
-        --night: #0d0507;
-        --night-soft: #1a0a0f;
-        --bg-start: #1a0a0f;
-        --bg-mid: #2d1018;
-        --bg-end: #4a1a26;
-        --glow-top: rgba(232, 168, 124, .35);
-        --glow-bottom: rgba(212, 120, 130, .32);
-        --glass: rgba(46, 18, 24, .72);
-        --glass-strong: rgba(38, 14, 20, .93);
-        --line: rgba(232, 190, 150, .14);
-        --line-bright: rgba(232, 168, 124, .42);
-        --text: #fdf5ee;
-        --muted: #c9a08f;
-        --muted-light: #e8c9b5;
-        --gold: #e8a87c;
-        --gold-bright: #ffb88c;
-        --cream: #f4d9c0;
-        --rose: #d4788a;
-        --rose-soft: #e8a0b0;
-        --accent-wash: rgba(232, 168, 124, .14);
-        --accent-shadow: rgba(232, 168, 124, .28);
-        --brand-shadow: rgba(232, 168, 124, .35);
-        --button-shadow: rgba(212, 120, 130, .3);
-        --status-border: rgba(232, 168, 124, .35);
-        --status-bg: rgba(232, 168, 124, .1);
-        --warning: #ffd27b;
-        --danger: #ff8fa3;
-        --shadow: 0 32px 90px rgba(40, 10, 15, .5);
-    }
+:root{
+    --bg-0: #14060b;
+    --bg-1: #1a0a0f;
+    --bg-2: #2d1018;
+    --surface: #2a1220;
+    --surface-2: #3a1a2a;
 
-    * { box-sizing: border-box; }
-    html { min-width: 320px; background: var(--night); }
-    body {
-        min-height: 100vh;
-        margin: 0;
-        overflow-x: hidden;
-        color: var(--text);
-        background:
-            radial-gradient(ellipse at 88% 20%, var(--glow-top), transparent 31rem),
-            radial-gradient(ellipse at 9% 105%, var(--glow-bottom), transparent 37rem),
-            linear-gradient(135deg, var(--bg-start) 0%, var(--bg-mid) 49%, var(--bg-end) 100%);
-        font-family: "Manrope", ui-sans-serif, system-ui, sans-serif;
-        transition: background 1.4s ease;
-    }
+    --border: rgba(255,200,220,.10);
+    --border-2: rgba(255,200,220,.18);
+    --border-3: rgba(255,200,220,.28);
 
-    body::before {
-        position: fixed;
-        inset: 0;
-        z-index: -1;
-        content: "";
-        opacity: .42;
-        background-image:
-            linear-gradient(rgba(255, 220, 190, .02) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 220, 190, .02) 1px, transparent 1px);
-        background-size: 44px 44px;
-        mask-image: linear-gradient(to bottom, black, transparent 88%);
-    }
+    --text: #fdf5ee;
+    --text-2: #e8c9b5;
+    --text-3: #c9a08f;
+    --text-4: #8a6b60;
 
-    body::after {
-        position: fixed;
-        top: 17%;
-        left: 4%;
-        width: 6px;
-        height: 6px;
-        content: "";
-        border-radius: 50%;
-        background: var(--gold);
-        box-shadow:
-            23vw 14vh 0 1px rgba(244, 217, 192, .7),
-            47vw 70vh 0 1px rgba(232, 168, 124, .5),
-            79vw 9vh 0 1px rgba(212, 120, 138, .55),
-            89vw 59vh 0 1px rgba(232, 168, 124, .5);
-        animation: drift 9s ease-in-out infinite alternate;
-    }
+    --gold: #e8a87c;
+    --gold-2: #ffb88c;
+    --cream: #f4d9c0;
+    --rose: #d4788a;
+    --rose-2: #e8a0b0;
+    --green: #25D366;
 
-    @keyframes drift {
-        from { transform: translate3d(0, 0, 0); opacity: .45; }
-        to { transform: translate3d(8px, 18px, 0); opacity: .95; }
-    }
+    --grad: linear-gradient(135deg, #e8a87c 0%, #f4d9c0 100%);
+    --grad-rose: linear-gradient(135deg, #d4788a 0%, #e8a0b0 100%);
 
-    button, input { font: inherit; }
-    button { cursor: pointer; }
-    button:focus-visible, input:focus-visible {
-        outline: 2px solid var(--gold);
-        outline-offset: 3px;
-    }
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 16px;
+    --r-xl: 22px;
+    --r-2xl: 28px;
 
-    .page {
-        width: min(1140px, calc(100% - 44px));
-        min-height: 100vh;
-        margin: 0 auto;
-        padding: 28px 0 34px;
-    }
+    --shadow: 0 24px 64px rgba(40,10,15,.5);
+    --t: 250ms cubic-bezier(.4,0,.2,1);
+}
 
-    .topbar, .brand, .top-actions, .live-status, .status-dot, .card-top,
-    .card-identity, .code-heading, .console-foot, .guide-trigger, .guide-title,
-    .stat-label, .activity-item, .activity-icon, .footer-links, .palette-dots {
-        display: flex;
-        align-items: center;
-    }
+html,body{height:100%}
+body{
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+    background:var(--bg-1);
+    color:var(--text);
+    min-height:100dvh;
+    overflow-x:hidden;
+    font-size:14px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    position:relative;
+}
 
-    .topbar {
-        justify-content: space-between;
-        gap: 20px;
-        padding-bottom: 22px;
-        border-bottom: 1px solid var(--line);
-    }
+body::before{
+    content:'';
+    position:fixed;
+    inset:0;
+    z-index:0;
+    background:
+        radial-gradient(ellipse at 88% 20%, rgba(232,168,124,.28), transparent 31rem),
+        radial-gradient(ellipse at 9% 105%, rgba(212,120,138,.28), transparent 37rem),
+        linear-gradient(135deg, #1a0a0f 0%, #2d1018 49%, #4a1a26 100%);
+    pointer-events:none;
+}
 
-    .brand { gap: 12px; }
-    .top-actions { gap: 10px; }
-    .theme-button {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 10px;
-        color: var(--muted-light);
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        background: rgba(30, 12, 16, .5);
-        font-family: "DM Mono", monospace;
-        font-size: .6rem;
-        letter-spacing: .05em;
-        transition: border-color .3s, color .3s, background .3s, transform .2s;
-    }
-    .theme-button:hover {
-        color: var(--gold);
-        border-color: var(--status-border);
-        background: var(--status-bg);
-        transform: translateY(-1px);
-    }
-    .palette-dots { gap: 3px; }
-    .palette-dot {
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        box-shadow: 0 0 7px currentColor;
-    }
-    .palette-dot:first-child { color: var(--gold); background: var(--gold); }
-    .palette-dot:nth-child(2) { color: var(--rose); background: var(--rose); }
-    .palette-dot:nth-child(3) { color: var(--cream); background: var(--cream); }
-    .theme-arrow { color: var(--gold); font-size: .8rem; }
+body::after{
+    content:'';
+    position:fixed;
+    inset:0;
+    z-index:0;
+    opacity:.4;
+    background-image:
+        linear-gradient(rgba(255,220,190,.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,220,190,.02) 1px, transparent 1px);
+    background-size:44px 44px;
+    -webkit-mask-image: linear-gradient(to bottom, black, transparent 88%);
+    mask-image: linear-gradient(to bottom, black, transparent 88%);
+    pointer-events:none;
+}
 
-    .brand-mark {
-        display: grid;
-        width: 42px;
-        height: 42px;
-        place-items: center;
-        color: #2d1018;
-        border: 1px solid rgba(255, 255, 255, .3);
-        border-radius: 14px;
-        background: linear-gradient(145deg, var(--gold), var(--cream));
-        box-shadow: 0 0 34px var(--brand-shadow);
-        font-size: 1.2rem;
-        font-weight: 900;
-        animation: heartBeat 2.4s ease-in-out infinite;
-    }
-    @keyframes heartBeat {
-        0%, 100% { transform: scale(1); }
-        15%, 45% { transform: scale(1.06); }
-        30% { transform: scale(.96); }
-    }
-    .brand-name {
-        margin: 0;
-        font-family: "Dancing Script", cursive;
-        font-size: 1.5rem;
-        font-weight: 700;
-        letter-spacing: .02em;
-        color: var(--text);
-    }
-    .brand-name span { color: var(--gold); }
-    .brand-subtitle {
-        margin: 2px 0 0;
-        color: var(--muted);
-        font-size: .68rem;
-        letter-spacing: .03em;
-    }
-    .live-status {
-        gap: 8px;
-        padding: 9px 13px;
-        color: var(--gold);
-        border: 1px solid var(--status-border);
-        border-radius: 999px;
-        background: var(--status-bg);
-        font-family: "DM Mono", monospace;
-        font-size: .67rem;
-        letter-spacing: .08em;
-        text-transform: uppercase;
-    }
-    .status-dot {
-        width: 7px;
-        height: 7px;
-        flex: 0 0 auto;
-        border-radius: 50%;
-        background: currentColor;
-        box-shadow: 0 0 12px currentColor;
-        animation: pulse 2s ease-in-out infinite;
-    }
-    .live-status.starting, .live-status.recovering {
-        color: var(--warning);
-        border-color: rgba(255, 210, 123, .3);
-        background: rgba(255, 210, 123, .07);
-    }
-    .live-status.offline, .live-status.error {
-        color: var(--danger);
-        border-color: rgba(255, 143, 163, .3);
-        background: rgba(255, 143, 163, .07);
-    }
-    @keyframes pulse { 50% { opacity: .4; transform: scale(.78); } }
+::selection{background:rgba(232,168,124,.3);color:#fff}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:var(--bg-0)}
+::-webkit-scrollbar-thumb{background:var(--surface-2);border-radius:8px}
 
-    .hero {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(390px, 464px);
-        gap: clamp(44px, 8vw, 110px);
-        align-items: center;
-        padding: clamp(58px, 9vw, 105px) 0 64px;
-    }
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input{font-family:inherit;outline:none;border:none;background:none;color:inherit}
+a{color:inherit;text-decoration:none}
 
-    .hero-copy { max-width: 570px; }
-    .eyebrow {
-        display: inline-flex;
-        gap: 9px;
-        align-items: center;
-        margin: 0 0 18px;
-        color: var(--gold);
-        font-family: "DM Mono", monospace;
-        font-size: .68rem;
-        font-weight: 500;
-        letter-spacing: .16em;
-        text-transform: uppercase;
-    }
-    .eyebrow::before {
-        width: 27px;
-        height: 1px;
-        content: "";
-        background: var(--gold);
-        box-shadow: 0 0 9px var(--gold);
-    }
+/* ═══════════════════════════════════════════════
+   NAVBAR
+═══════════════════════════════════════════════ */
+.nav{
+    position:relative;z-index:10;
+    display:flex;align-items:center;justify-content:space-between;
+    gap:16px;
+    padding:14px 28px;
+    background:rgba(20,6,11,.72);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+    border-bottom:1px solid var(--border);
+    position:sticky;top:0;
+}
 
-    h1 {
-        max-width: 620px;
-        margin: 0;
-        font-size: clamp(2.9rem, 6.1vw, 5.9rem);
-        line-height: .96;
-        letter-spacing: -.075em;
-        font-weight: 800;
-    }
-    h1 .script {
-        display: block;
-        font-family: "Dancing Script", cursive;
-        font-weight: 700;
-        font-size: 1.08em;
-        letter-spacing: -.02em;
-        color: var(--gold);
-        text-shadow: 0 0 32px var(--accent-shadow);
-        line-height: 1;
-        margin-top: .1em;
-    }
+.brand{display:flex;align-items:center;gap:12px}
+.brand-logo{
+    width:40px;height:40px;
+    border-radius:12px;
+    background:var(--grad);
+    display:grid;place-items:center;
+    font-size:20px;
+    box-shadow:0 0 30px rgba(232,168,124,.4);
+    animation:heartBeat 2.4s ease-in-out infinite;
+}
+@keyframes heartBeat{
+    0%,100%{transform:scale(1)}
+    15%,45%{transform:scale(1.06)}
+    30%{transform:scale(.96)}
+}
+.brand-text{display:flex;flex-direction:column;line-height:1.15}
+.brand-name{
+    font-family:'Dancing Script',cursive;
+    font-size:1.4rem;
+    font-weight:700;
+    color:var(--text);
+}
+.brand-name span{color:var(--gold)}
+.brand-sub{
+    font-size:10.5px;color:var(--text-4);
+    margin-top:2px;letter-spacing:.3px;
+}
 
-    .hero-copy > p:not(.eyebrow) {
-        max-width: 500px;
-        margin: 27px 0 0;
-        color: var(--muted-light);
-        font-size: 1rem;
-        line-height: 1.8;
-    }
-    .hero-copy > p:not(.eyebrow) b { color: var(--text); font-weight: 600; }
-    .hero-copy > p:not(.eyebrow) .accent {
-        color: var(--gold);
-        font-weight: 700;
-    }
+.nav-stats{display:flex;align-items:center;gap:10px}
+.stat-pill{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:6px 12px;
+    border-radius:100px;
+    background:rgba(232,168,124,.08);
+    border:1px solid rgba(232,168,124,.3);
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    font-weight:600;
+    color:var(--gold);
+}
+.stat-pill.rose{
+    background:rgba(212,120,138,.08);
+    border-color:rgba(212,120,138,.3);
+    color:var(--rose-2);
+}
+.stat-pill .dot{
+    width:6px;height:6px;border-radius:50%;
+    background:currentColor;
+    box-shadow:0 0 8px currentColor;
+    animation:blink 2s infinite;
+}
+@keyframes blink{
+    0%,100%{opacity:1}
+    50%{opacity:.4}
+}
 
-    .feature-row {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
-        margin-top: 34px;
-    }
-    .feature {
-        padding: 13px 12px;
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        background: rgba(35, 15, 20, .4);
-        transition: border-color .3s, transform .2s;
-    }
-    .feature:hover {
-        border-color: var(--status-border);
-        transform: translateY(-2px);
-    }
-    .feature-number {
-        display: block;
-        margin-bottom: 8px;
-        color: var(--gold);
-        font-family: "DM Mono", monospace;
-        font-size: .63rem;
-    }
-    .feature strong {
-        display: block;
-        font-size: .71rem;
-        font-weight: 700;
-        line-height: 1.35;
-    }
+/* ═══════════════════════════════════════════════
+   HERO
+═══════════════════════════════════════════════ */
+.hero{
+    position:relative;z-index:5;
+    max-width:1200px;
+    margin:0 auto;
+    padding:56px 28px 24px;
+    text-align:center;
+}
 
-    .console-card {
-        position: relative;
-        padding: 25px;
-        overflow: hidden;
-        border: 1px solid rgba(232, 190, 150, .22);
-        border-radius: 25px;
-        background: linear-gradient(145deg, rgba(60, 25, 35, .85), rgba(35, 15, 20, .95));
-        box-shadow: var(--shadow), inset 0 1px rgba(255, 255, 255, .08);
-        backdrop-filter: blur(18px);
-    }
-    .console-card::before {
-        position: absolute;
-        top: -125px;
-        right: -75px;
-        width: 270px;
-        height: 270px;
-        content: "";
-        border-radius: 50%;
-        background: var(--accent-wash);
-        filter: blur(10px);
-        pointer-events: none;
-    }
-    .card-top, .console-body, .console-foot, .guide, .result { position: relative; z-index: 1; }
-    .card-top { justify-content: space-between; gap: 15px; }
-    .card-identity { gap: 10px; }
-    .console-icon {
-        display: grid;
-        width: 36px;
-        height: 36px;
-        place-items: center;
-        color: var(--gold);
-        border: 1px solid rgba(232, 168, 124, .3);
-        border-radius: 11px;
-        background: rgba(232, 168, 124, .12);
-        font-size: 1rem;
-    }
-    .card-kicker {
-        margin: 0 0 4px;
-        color: var(--gold);
-        font-family: "DM Mono", monospace;
-        font-size: .61rem;
-        font-weight: 500;
-        letter-spacing: .16em;
-        text-transform: uppercase;
-    }
-    .card-heading {
-        margin: 0;
-        font-size: 1.22rem;
-        letter-spacing: -.04em;
-        color: var(--text);
-    }
-    .card-version {
-        color: var(--muted);
-        font-family: "DM Mono", monospace;
-        font-size: .63rem;
-    }
-    .progress {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 5px;
-        margin: 24px 0 25px;
-    }
-    .progress span {
-        height: 4px;
-        border-radius: 9px;
-        background: linear-gradient(90deg, var(--gold), var(--cream));
-        box-shadow: 0 0 11px rgba(232, 168, 124, .4);
-    }
-    .progress span:last-child {
-        background: rgba(232, 190, 150, .16);
-        box-shadow: none;
-    }
-    .field-label {
-        display: block;
-        margin-bottom: 8px;
-        color: var(--muted-light);
-        font-size: .72rem;
-        font-weight: 700;
-    }
-    .input-wrap { position: relative; }
-    .input-prefix {
-        position: absolute;
-        top: 50%;
-        left: 14px;
-        color: var(--gold);
-        font-family: "DM Mono", monospace;
-        font-size: .82rem;
-        transform: translateY(-50%);
-        pointer-events: none;
-    }
-    input {
-        width: 100%;
-        min-width: 0;
-        padding: 15px 15px 15px 40px;
-        color: var(--text);
-        border: 1px solid rgba(232, 190, 150, .18);
-        border-radius: 12px;
-        outline: 0;
-        background: rgba(25, 10, 14, .75);
-        font-family: "DM Mono", monospace;
-        letter-spacing: .05em;
-        transition: border-color .2s, box-shadow .2s;
-    }
-    input::placeholder {
-        color: #8a6b60;
-        font-family: "Manrope", sans-serif;
-        letter-spacing: 0;
-    }
-    input:focus {
-        border-color: var(--gold);
-        box-shadow: 0 0 0 4px rgba(232, 168, 124, .12);
-    }
-    .input-hint {
-        margin: 7px 0 0;
-        color: var(--muted);
-        font-family: "DM Mono", monospace;
-        font-size: .59rem;
-    }
-    .pair-button {
-        display: flex;
-        width: 100%;
-        min-height: 48px;
-        align-items: center;
-        justify-content: center;
-        gap: 9px;
-        margin-top: 16px;
-        color: #2d1018;
-        border: 0;
-        border-radius: 12px;
-        background: linear-gradient(115deg, var(--gold), var(--cream));
-        box-shadow: 0 12px 28px var(--button-shadow);
-        font-size: .76rem;
-        font-weight: 900;
-        letter-spacing: .1em;
-        text-transform: uppercase;
-        transition: transform .2s, filter .2s, opacity .2s;
-    }
-    .pair-button:hover {
-        filter: brightness(1.08);
-        transform: translateY(-2px);
-    }
-    .pair-button:disabled {
-        cursor: not-allowed;
-        opacity: .55;
-        transform: none;
-    }
-    .button-icon { font-size: 1rem; }
+.hero-badge{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:6px 14px;
+    border-radius:100px;
+    background:rgba(232,168,124,.1);
+    border:1px solid rgba(232,168,124,.3);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:1.5px;
+    color:var(--gold);
+    text-transform:uppercase;
+    margin-bottom:20px;
+}
 
-    .result {
-        display: grid;
-        min-height: 82px;
-        margin-top: 14px;
-        padding: 15px;
-        place-items: center;
-        gap: 7px;
-        color: var(--muted-light);
-        border: 1px dashed rgba(232, 190, 150, .2);
-        border-radius: 13px;
-        background: rgba(25, 10, 14, .5);
-        text-align: center;
-        font-size: .77rem;
-    }
-    .result.success {
-        border-style: solid;
-        border-color: rgba(232, 168, 124, .4);
-        background: rgba(232, 168, 124, .1);
-    }
-    .result.error {
-        border-style: solid;
-        border-color: rgba(255, 143, 163, .4);
-        color: var(--danger);
-    }
-    .result.loading { color: var(--warning); }
-    .result-kicker {
-        color: var(--gold);
-        font-family: "DM Mono", monospace;
-        font-size: .6rem;
-        letter-spacing: .1em;
-        text-transform: uppercase;
-    }
-    .code-heading { justify-content: center; gap: 12px; }
-    .result code {
-        color: #fff;
-        font-family: "DM Mono", monospace;
-        font-size: 1.48rem;
-        letter-spacing: .2em;
-        text-shadow: 0 0 16px rgba(232, 168, 124, .4);
-    }
-    .copy-button {
-        padding: 5px 8px;
-        color: var(--gold);
-        border: 1px solid rgba(232, 168, 124, .35);
-        border-radius: 7px;
-        background: rgba(232, 168, 124, .12);
-        font-family: "DM Mono", monospace;
-        font-size: .58rem;
-        font-weight: 500;
-        text-transform: uppercase;
-    }
-    .copy-button:hover { background: rgba(232, 168, 124, .2); }
-    .countdown { color: var(--muted); font-size: .64rem; }
+.hero h1{
+    font-size:clamp(2.4rem,5vw,3.8rem);
+    font-weight:800;
+    letter-spacing:-1.5px;
+    line-height:1.05;
+    margin-bottom:14px;
+}
 
-    .guide {
-        margin-top: 15px;
-        border: 1px solid var(--line);
-        border-radius: 13px;
-        background: rgba(255, 255, 255, .025);
-    }
-    .guide-trigger {
-        width: 100%;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 12px 14px;
-        color: var(--gold);
-        border: 0;
-        background: transparent;
-        text-align: left;
-    }
-    .guide-title { gap: 8px; font-size: .71rem; font-weight: 800; }
-    .guide-chevron { transition: transform .2s; }
-    .guide.open .guide-chevron { transform: rotate(180deg); }
-    .guide-content {
-        display: none;
-        padding: 0 14px 14px;
-        color: var(--muted-light);
-        font-size: .69rem;
-        line-height: 1.6;
-    }
-    .guide.open .guide-content { display: block; }
-    .guide-content ol { margin: 0; padding-left: 20px; }
-    .guide-content li { padding-left: 3px; }
-    .guide-content li + li { margin-top: 5px; }
-    .guide-content strong { color: var(--gold); font-weight: 700; }
+.hero h1 .script{
+    display:block;
+    font-family:'Dancing Script',cursive;
+    font-weight:700;
+    font-size:1.05em;
+    color:var(--gold);
+    margin-top:.08em;
+    text-shadow:0 0 30px rgba(232,168,124,.4);
+}
 
-    .console-foot {
-        justify-content: space-between;
-        gap: 12px;
-        margin-top: 18px;
-        padding-top: 15px;
-        color: var(--muted);
-        border-top: 1px solid var(--line);
-        font-family: "DM Mono", monospace;
-        font-size: .59rem;
-    }
-    .console-foot strong { color: var(--gold); font-weight: 500; }
+.hero p{
+    max-width:560px;
+    margin:0 auto 28px;
+    color:var(--text-2);
+    font-size:15px;
+    line-height:1.7;
+}
+.hero p b{color:var(--text);font-weight:600}
 
-    .telemetry {
-        display: grid;
-        grid-template-columns: minmax(0, 1.15fr) minmax(250px, .85fr);
-        gap: 15px;
-        padding-top: 25px;
-        border-top: 1px solid var(--line);
-    }
-    .telemetry-panel {
-        padding: 19px;
-        border: 1px solid var(--line);
-        border-radius: 17px;
-        background: rgba(30, 12, 18, .35);
-    }
-    .panel-heading {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 12px;
-        margin-bottom: 16px;
-    }
-    .panel-heading h2 {
-        margin: 0;
-        font-size: .86rem;
-        letter-spacing: -.02em;
-        color: var(--text);
-    }
-    .panel-heading span {
-        color: var(--muted);
-        font-family: "DM Mono", monospace;
-        font-size: .57rem;
-    }
-    .activity-list { display: grid; gap: 11px; }
-    .activity-item {
-        gap: 10px;
-        color: var(--muted-light);
-        font-size: .69rem;
-    }
-    .activity-icon {
-        width: 26px;
-        height: 26px;
-        flex: 0 0 auto;
-        justify-content: center;
-        color: var(--gold);
-        border-radius: 8px;
-        background: rgba(232, 168, 124, .12);
-    }
-    .activity-item small {
-        display: block;
-        margin-top: 2px;
-        color: var(--muted);
-        font-size: .58rem;
-    }
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-    }
-    .stat {
-        padding: 12px;
-        border: 1px solid rgba(232, 190, 150, .1);
-        border-radius: 11px;
-        background: rgba(255, 255, 255, .025);
-    }
-    .stat-label {
-        gap: 6px;
-        color: var(--muted);
-        font-family: "DM Mono", monospace;
-        font-size: .57rem;
-        text-transform: uppercase;
-    }
-    .stat-value {
-        display: block;
-        margin-top: 8px;
-        color: var(--text);
-        font-family: "DM Mono", monospace;
-        font-size: .85rem;
-    }
+/* ═══════════════════════════════════════════════
+   MAIN GRID
+═══════════════════════════════════════════════ */
+.main{
+    position:relative;z-index:5;
+    max-width:1200px;
+    margin:0 auto;
+    padding:0 28px 60px;
+    display:grid;
+    grid-template-columns:1fr 1.15fr;
+    gap:28px;
+}
 
-    /* ─── Brown hair wali dedication ─── */
-    .dedication {
-        margin-top: 40px;
-        padding: 40px 24px;
-        text-align: center;
-        border: 1px solid var(--line);
-        border-radius: 22px;
-        background:
-            radial-gradient(circle at 50% 0%, rgba(232, 168, 124, .14), transparent 60%),
-            linear-gradient(145deg, rgba(60, 25, 35, .5), rgba(35, 15, 20, .7));
-        position: relative;
-        overflow: hidden;
-    }
-    .dedication::before {
-        content: "💗";
-        position: absolute;
-        top: 14px;
-        left: 18px;
-        font-size: 1rem;
-        opacity: .4;
-    }
-    .dedication::after {
-        content: "🌸";
-        position: absolute;
-        bottom: 14px;
-        right: 18px;
-        font-size: 1rem;
-        opacity: .4;
-    }
-    .dedication-title {
-        font-family: "Dancing Script", cursive;
-        font-size: 2rem;
-        font-weight: 700;
-        color: var(--gold);
-        margin: 0;
-        line-height: 1.2;
-        text-shadow: 0 0 30px var(--accent-shadow);
-    }
-    .dedication-sub {
-        margin: 12px 0 0;
-        color: var(--muted);
-        font-family: "DM Mono", monospace;
-        font-size: .65rem;
-        letter-spacing: .2em;
-        text-transform: uppercase;
-    }
+@media(max-width:900px){
+    .main{grid-template-columns:1fr}
+}
 
-    footer {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 14px;
-        padding-top: 26px;
-        color: #a17b70;
-        font-family: "DM Mono", monospace;
-        font-size: .59rem;
-    }
-    footer .heart { color: var(--gold); }
-    .footer-links { gap: 13px; }
-    .footer-links a {
-        color: var(--muted-light);
-        text-decoration: none;
-        transition: color .2s;
-    }
-    .footer-links a:hover { color: var(--gold); }
+/* ═══════════════════════════════════════════════
+   CARD
+═══════════════════════════════════════════════ */
+.card{
+    background:linear-gradient(180deg, rgba(58,26,42,.6), rgba(42,18,32,.85));
+    border:1px solid var(--border-2);
+    border-radius:var(--r-2xl);
+    padding:28px;
+    position:relative;
+    box-shadow:var(--shadow);
+    backdrop-filter:blur(20px);
+}
 
-    @media (max-width: 860px) {
-        .hero { grid-template-columns: 1fr; gap: 42px; }
-        .hero-copy { max-width: 650px; }
-        .console-card { max-width: 560px; }
-        .telemetry { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 540px) {
-        .page { width: min(100% - 26px, 1140px); padding-top: 17px; }
-        .topbar { align-items: flex-start; }
-        .brand-subtitle { display: none; }
-        .top-actions { gap: 6px; }
-        .theme-button { padding: 8px; }
-        .theme-button #themeName { display: none; }
-        .live-status { padding: 8px 9px; font-size: .58rem; }
-        .hero { padding: 55px 0 46px; }
-        h1 { font-size: 3.25rem; }
-        h1 .script { font-size: 1.05em; }
-        .hero-copy > p:not(.eyebrow) { font-size: .9rem; line-height: 1.7; }
-        .feature-row { gap: 7px; }
-        .feature { padding: 11px 8px; }
-        .feature strong { font-size: .63rem; }
-        .console-card { padding: 20px; border-radius: 20px; }
-        .card-heading { font-size: 1.08rem; }
-        .dedication-title { font-size: 1.6rem; }
-        footer { display: block; line-height: 1.7; }
-        .footer-links { margin-top: 8px; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-        *, *::before, *::after {
-            animation-duration: .01ms !important;
-            animation-iteration-count: 1 !important;
-            transition-duration: .01ms !important;
-        }
-    }
+.card::before{
+    content:'';
+    position:absolute;
+    top:-1px;left:24px;right:24px;
+    height:1px;
+    background:linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity:.5;
+}
+
+.card-head{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:12px;
+    margin-bottom:20px;
+}
+
+.card-title{
+    display:flex;align-items:center;gap:8px;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:1.5px;
+    color:var(--text-4);
+    text-transform:uppercase;
+}
+.card-title .ic{color:var(--gold);font-size:12px}
+
+.card-badge{
+    display:inline-flex;align-items:center;gap:5px;
+    padding:4px 10px;
+    border-radius:6px;
+    background:rgba(232,168,124,.1);
+    border:1px solid rgba(232,168,124,.3);
+    font-size:10px;font-weight:700;
+    letter-spacing:1px;color:var(--gold);
+    text-transform:uppercase;
+}
+
+/* ═══════════════════════════════════════════════
+   FORM
+═══════════════════════════════════════════════ */
+.form-label{
+    display:flex;justify-content:space-between;align-items:center;
+    font-size:11px;font-weight:700;
+    letter-spacing:1px;
+    color:var(--text-3);
+    text-transform:uppercase;
+    margin-bottom:8px;
+}
+.form-label .hint{
+    text-transform:none;letter-spacing:0;
+    font-weight:500;color:var(--text-4);
+    font-size:10.5px;
+}
+
+.input-wrap{
+    position:relative;
+    margin-bottom:14px;
+}
+
+.input-prefix{
+    position:absolute;
+    left:16px;top:50%;transform:translateY(-50%);
+    color:var(--gold);
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;font-weight:700;
+    pointer-events:none;
+}
+
+.input{
+    width:100%;
+    padding:14px 16px 14px 40px;
+    background:rgba(20,6,11,.5);
+    border:1px solid var(--border-2);
+    border-radius:var(--r-md);
+    color:var(--text);
+    font-family:'JetBrains Mono',monospace;
+    font-size:15px;
+    letter-spacing:.5px;
+    transition:var(--t);
+}
+.input::placeholder{
+    color:var(--text-4);
+    font-family:'Inter',sans-serif;
+    letter-spacing:0;
+}
+.input:focus{
+    border-color:var(--gold);
+    background:rgba(20,6,11,.7);
+    box-shadow:0 0 0 4px rgba(232,168,124,.12);
+}
+
+.btn{
+    width:100%;
+    padding:14px 20px;
+    border-radius:var(--r-md);
+    font-size:13.5px;
+    font-weight:700;
+    letter-spacing:.2px;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    transition:var(--t);
+    cursor:pointer;
+}
+
+.btn-primary{
+    background:var(--grad);
+    color:#2d1018;
+    box-shadow:0 10px 28px rgba(212,120,138,.3);
+}
+.btn-primary:hover:not(:disabled){
+    filter:brightness(1.08);
+    transform:translateY(-2px);
+    box-shadow:0 14px 34px rgba(212,120,138,.45);
+}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+
+.btn-ghost{
+    background:rgba(255,255,255,.04);
+    border:1px solid var(--border-2);
+    color:var(--text-2);
+}
+.btn-ghost:hover{
+    background:rgba(255,255,255,.08);
+    color:var(--text);
+    border-color:var(--border-3);
+}
+
+.btn-sm{width:auto;padding:8px 14px;font-size:12px}
+.btn-danger{
+    background:rgba(255,100,120,.15);
+    border:1px solid rgba(255,100,120,.4);
+    color:#ff8a9c;
+}
+.btn-danger:hover{
+    background:rgba(255,100,120,.25);
+    color:#ffa5b3;
+}
+
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+
+/* ═══════════════════════════════════════════════
+   STATE BLOCKS
+═══════════════════════════════════════════════ */
+.state{animation:fadeUp .3s ease;margin-top:14px}
+@keyframes fadeUp{
+    from{opacity:0;transform:translateY(8px)}
+    to{opacity:1;transform:none}
+}
+.hidden{display:none !important}
+
+.loading{
+    text-align:center;
+    padding:16px;
+}
+.spinner{
+    width:36px;height:36px;
+    margin:0 auto 12px;
+    border:2.5px solid var(--border-2);
+    border-top-color:var(--gold);
+    border-radius:50%;
+    animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{
+    font-size:13px;color:var(--text-2);font-weight:500;
+}
+
+.code-box{
+    background:rgba(232,168,124,.08);
+    border:1.5px dashed rgba(232,168,124,.4);
+    border-radius:var(--r-lg);
+    padding:16px 20px;
+    text-align:center;
+    margin-top:14px;
+}
+.code-label{
+    font-size:10.5px;font-weight:700;
+    letter-spacing:1.2px;color:var(--text-4);
+    text-transform:uppercase;margin-bottom:8px;
+}
+.code-value{
+    font-family:'JetBrains Mono',monospace;
+    font-size:28px;font-weight:700;
+    letter-spacing:5px;
+    color:var(--gold);
+    text-shadow:0 0 20px rgba(232,168,124,.5);
+    cursor:pointer;
+    user-select:all;
+}
+
+.timer-bar{
+    height:2px;
+    background:rgba(255,255,255,.06);
+    border-radius:2px;
+    overflow:hidden;
+    margin-top:12px;
+}
+.timer-fill{
+    height:100%;
+    background:var(--grad);
+    border-radius:2px;
+    width:100%;
+    transition:width 1s linear;
+}
+
+.error-box{
+    background:rgba(255,100,120,.08);
+    border:1px solid rgba(255,100,120,.3);
+    border-radius:var(--r-md);
+    padding:14px;
+    text-align:center;
+    color:#ff8a9c;
+    font-size:13px;
+}
+
+/* ═══════════════════════════════════════════════
+   SESSIONS LIST
+═══════════════════════════════════════════════ */
+.sessions-list{
+    display:flex;flex-direction:column;gap:10px;
+    max-height:520px;
+    overflow-y:auto;
+    padding-right:4px;
+}
+
+.session-item{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:12px;
+    padding:14px 16px;
+    background:rgba(20,6,11,.4);
+    border:1px solid var(--border);
+    border-radius:var(--r-md);
+    transition:var(--t);
+    animation:fadeUp .3s ease;
+}
+.session-item:hover{
+    border-color:var(--border-2);
+    background:rgba(20,6,11,.6);
+    transform:translateX(2px);
+}
+
+.session-info{
+    display:flex;align-items:center;gap:12px;
+    flex:1;min-width:0;
+}
+
+.session-avatar{
+    width:38px;height:38px;
+    flex-shrink:0;
+    border-radius:10px;
+    display:grid;place-items:center;
+    font-size:16px;
+    background:var(--grad);
+    color:#2d1018;
+    font-weight:800;
+}
+.session-avatar.connected{background:linear-gradient(135deg,#25D366,#10b981);color:#04140a}
+.session-avatar.pairing{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#2d1018}
+.session-avatar.disconnected{background:linear-gradient(135deg,#6b7280,#4b5563);color:#fff}
+
+.session-details{display:flex;flex-direction:column;gap:2px;min-width:0}
+.session-number{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    font-weight:600;
+    color:var(--text);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+.session-meta{
+    font-size:11px;
+    color:var(--text-4);
+    display:flex;align-items:center;gap:8px;
+}
+.session-state{
+    display:inline-flex;align-items:center;gap:4px;
+    font-size:10.5px;
+    font-weight:600;
+    letter-spacing:.3px;
+    text-transform:uppercase;
+}
+.session-state.connected{color:#6ee7a0}
+.session-state.pairing{color:#fcd34d}
+.session-state.disconnected{color:#9ca3af}
+.session-state .dot{
+    width:5px;height:5px;border-radius:50%;
+    background:currentColor;
+    box-shadow:0 0 6px currentColor;
+    animation:blink 2s infinite;
+}
+
+.session-actions{display:flex;gap:6px}
+
+/* Empty state */
+.empty-state{
+    text-align:center;
+    padding:40px 20px;
+    color:var(--text-4);
+}
+.empty-state .icon{
+    font-size:36px;
+    margin-bottom:12px;
+    opacity:.4;
+}
+.empty-state p{
+    font-size:13px;
+    margin-bottom:6px;
+    color:var(--text-3);
+}
+.empty-state small{
+    font-size:11px;
+    color:var(--text-4);
+}
+
+/* Stats grid */
+.stats-mini{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+    margin-top:20px;
+    padding-top:18px;
+    border-top:1px solid var(--border);
+}
+.stat-mini{
+    text-align:center;
+}
+.stat-mini .val{
+    font-family:'JetBrains Mono',monospace;
+    font-size:22px;
+    font-weight:700;
+    color:var(--gold);
+    display:block;
+    margin-bottom:2px;
+}
+.stat-mini .lbl{
+    font-size:10px;
+    font-weight:600;
+    letter-spacing:1px;
+    color:var(--text-4);
+    text-transform:uppercase;
+}
+
+/* ═══════════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════════ */
+.foot{
+    position:relative;z-index:5;
+    text-align:center;
+    padding:24px 28px;
+    border-top:1px solid var(--border);
+    font-family:'Dancing Script',cursive;
+    font-size:1.15rem;
+    color:var(--gold);
+}
+.foot small{
+    display:block;
+    font-family:'Inter',sans-serif;
+    font-size:10.5px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--text-4);
+    margin-top:6px;
+}
+
+/* ═══════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════ */
+.toast{
+    position:fixed;
+    bottom:24px;left:50%;
+    transform:translate(-50%, 200%);
+    padding:12px 20px;
+    background:rgba(42,18,32,.96);
+    border:1px solid var(--border-3);
+    border-radius:var(--r-md);
+    font-size:13px;font-weight:600;
+    color:var(--text);
+    z-index:9999;
+    display:flex;align-items:center;gap:10px;
+    box-shadow:var(--shadow);
+    backdrop-filter:blur(20px);
+    transition:.4s cubic-bezier(.34,1.56,.64,1);
+    opacity:0;pointer-events:none;
+    max-width:calc(100vw - 32px);
+}
+.toast.show{transform:translate(-50%, 0);opacity:1}
+.toast-ic{
+    width:20px;height:20px;
+    border-radius:50%;
+    display:grid;place-items:center;
+    font-size:11px;font-weight:800;
+    flex-shrink:0;
+}
+.toast.success .toast-ic{background:rgba(37,211,102,.2);color:#25D366}
+.toast.error .toast-ic{background:rgba(255,100,120,.2);color:#ff8a9c}
+.toast.info .toast-ic{background:rgba(232,168,124,.2);color:var(--gold)}
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════ */
+@media(max-width:640px){
+    .nav{padding:12px 16px}
+    .brand-name{font-size:1.2rem}
+    .brand-sub{display:none}
+    .nav-stats .stat-pill:not(.rose){display:none}
+
+    .hero{padding:36px 20px 16px}
+    .hero h1{font-size:2.2rem;letter-spacing:-1px}
+    .hero p{font-size:14px}
+
+    .main{padding:0 16px 40px;gap:20px}
+    .card{padding:22px 18px;border-radius:20px}
+    .card-title{font-size:10px}
+
+    .code-value{font-size:22px;letter-spacing:3px}
+    .session-item{padding:12px 14px}
+    .session-avatar{width:34px;height:34px;font-size:14px}
+
+    .stats-mini{gap:6px}
+    .stat-mini .val{font-size:18px}
+
+    .foot{font-size:1rem;padding:20px}
+}
 </style>
 </head>
+
 <body>
-    <main class="page">
-        <header class="topbar">
-            <div class="brand">
-                <div class="brand-mark" aria-hidden="true">💚</div>
-                <div>
-                    <p class="brand-name">Saba <span>MD</span></p>
-                    <p class="brand-subtitle">Made with love · by Arslan Tech's 💗</p>
+
+<!-- ═══════════════ NAVBAR ═══════════════ -->
+<nav class="nav">
+    <div class="brand">
+        <div class="brand-logo">💚</div>
+        <div class="brand-text">
+            <div class="brand-name">Saba <span>MD</span></div>
+            <div class="brand-sub">Made with love · by Arslan Tech's</div>
+        </div>
+    </div>
+    <div class="nav-stats">
+        <div class="stat-pill" id="slotPill">
+            <span class="dot"></span>
+            <span id="slotText">0/10</span>
+        </div>
+        <div class="stat-pill rose" id="statusPill">
+            <span class="dot"></span>
+            <span id="statusText">Connecting</span>
+        </div>
+    </div>
+</nav>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<section class="hero">
+    <div class="hero-badge">💕 Multi-User Pairing Dashboard</div>
+    <h1>
+        Pair once.
+        <span class="script">love always.</span>
+    </h1>
+    <p>
+        <b>Saba MD</b> — a multi-device WhatsApp bot for up to <b>10 users</b>.
+        Enter your number, get a pairing code, and your bot goes live.
+    </p>
+</section>
+
+<!-- ═══════════════ MAIN GRID ═══════════════ -->
+<div class="main">
+
+    <!-- ═══════════════ LEFT: PAIR CARD ═══════════════ -->
+    <section class="card">
+        <div class="card-head">
+            <div class="card-title">
+                <span class="ic">◆</span>
+                <span>Link New Device</span>
+            </div>
+            <div class="card-badge" id="pairBadge">
+                <span>Ready</span>
+            </div>
+        </div>
+
+        <label class="form-label">
+            <span>WhatsApp Number</span>
+            <span class="hint">with country code</span>
+        </label>
+        <div class="input-wrap">
+            <span class="input-prefix">+</span>
+            <input
+                type="tel"
+                id="phoneInput"
+                class="input"
+                placeholder="923001234567"
+                maxlength="15"
+                inputmode="numeric"
+                autocomplete="off"
+                spellcheck="false"
+            >
+        </div>
+
+        <button type="button" class="btn btn-primary" id="pairBtn">
+            <span id="btnIcon">💗</span>
+            <span id="btnLabel">Generate Pairing Code</span>
+        </button>
+
+        <!-- Loading -->
+        <div class="state hidden" id="loadingState">
+            <div class="loading">
+                <div class="spinner"></div>
+                <div class="loading-text">Connecting to WhatsApp...</div>
+            </div>
+        </div>
+
+        <!-- Code -->
+        <div class="state hidden" id="codeState">
+            <div class="code-box">
+                <div class="code-label">💗 Your Pairing Code</div>
+                <div class="code-value" id="codeValue">----</div>
+                <div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>
+            </div>
+            <div class="btn-row" style="margin-top:12px">
+                <button class="btn btn-ghost btn-sm" id="copyBtn">Copy</button>
+                <button class="btn btn-ghost btn-sm" id="regenBtn">New Code</button>
+            </div>
+            <p style="font-size:11.5px;color:var(--text-4);text-align:center;margin-top:12px;line-height:1.6">
+                Open WhatsApp → <b style="color:var(--text-2)">Linked Devices</b> →
+                <b style="color:var(--text-2)">Link with Phone Number</b>
+            </p>
+        </div>
+
+        <!-- Error -->
+        <div class="state hidden" id="errorState">
+            <div class="error-box" id="errMsg">Something went wrong.</div>
+            <div class="btn-row" style="margin-top:12px">
+                <button class="btn btn-ghost btn-sm" id="retryBtn">Try Again</button>
+            </div>
+        </div>
+
+        <!-- Mini Stats -->
+        <div class="stats-mini">
+            <div class="stat-mini">
+                <span class="val" id="statActive">0</span>
+                <span class="lbl">Active</span>
+            </div>
+            <div class="stat-mini">
+                <span class="val" id="statSlots">10</span>
+                <span class="lbl">Slots</span>
+            </div>
+            <div class="stat-mini">
+                <span class="val" id="statUptime">—</span>
+                <span class="lbl">Uptime</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ RIGHT: SESSIONS LIST ═══════════════ -->
+    <section class="card">
+        <div class="card-head">
+            <div class="card-title">
+                <span class="ic">◆</span>
+                <span>Active Sessions</span>
+            </div>
+            <button class="btn btn-ghost btn-sm" id="refreshBtn">↻ Refresh</button>
+        </div>
+
+        <div class="sessions-list" id="sessionsList">
+            <!-- Populated by JS -->
+        </div>
+    </section>
+
+</div>
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<footer class="foot">
+    💗 For brown hair wali 💗
+    <small>— Arslan Tech's · Saba MD v2.0 —</small>
+</footer>
+
+<!-- ═══════════════ TOAST ═══════════════ -->
+<div class="toast" id="toast">
+    <span class="toast-ic" id="toastIcon">i</span>
+    <span id="toastMsg">Message</span>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   💚 SABA MD — Multi-User Frontend v2.0
+   👨‍💻 Made by Arslan Tech's for Saba
+═══════════════════════════════════════════════════════════ */
+(function(){
+'use strict';
+
+const $ = id => document.getElementById(id);
+const API = window.location.origin;
+
+const S = {
+    code: '',
+    codeExpiresAt: 0,
+    timerId: null,
+    pollId: null,
+    busy: false,
+};
+
+const E = {
+    phoneInput:  $('phoneInput'),
+    pairBtn:     $('pairBtn'),
+    btnLabel:    $('btnLabel'),
+    btnIcon:     $('btnIcon'),
+    loadingState:$('loadingState'),
+    codeState:   $('codeState'),
+    codeValue:   $('codeValue'),
+    timerFill:   $('timerFill'),
+    errorState:  $('errorState'),
+    errMsg:      $('errMsg'),
+    sessionsList:$('sessionsList'),
+    slotText:    $('slotText'),
+    statusText:  $('statusText'),
+    statusPill:  $('statusPill'),
+    slotPill:    $('slotPill'),
+    pairBadge:   $('pairBadge'),
+    statActive:  $('statActive'),
+    statSlots:   $('statSlots'),
+    statUptime:  $('statUptime'),
+    toast:       $('toast'),
+    toastMsg:    $('toastMsg'),
+    toastIcon:   $('toastIcon'),
+};
+
+/* ═══════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════ */
+function show(el){el.classList.remove('hidden')}
+function hide(el){el.classList.add('hidden')}
+function hideAll(){hide(E.loadingState);hide(E.codeState);hide(E.errorState)}
+
+function formatUptime(sec){
+    if(sec == null) return '—';
+    if(sec < 60) return sec+'s';
+    if(sec < 3600) return Math.floor(sec/60)+'m';
+    if(sec < 86400) return Math.floor(sec/3600)+'h';
+    return Math.floor(sec/86400)+'d';
+}
+
+function formatState(state){
+    const map = {
+        connected: 'Connected',
+        pairing: 'Pairing',
+        starting: 'Starting',
+        disconnected: 'Offline',
+    };
+    return map[state] || state;
+}
+
+let toastTimer;
+function toast(msg, type='info'){
+    E.toastMsg.textContent = msg;
+    E.toast.className = `toast show ${type}`;
+    const icons = {success:'✓',error:'✕',info:'i'};
+    E.toastIcon.textContent = icons[type] || 'i';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => E.toast.classList.remove('show'), 2800);
+}
+
+/* ═══════════════════════════════════════════════
+   COPY
+═══════════════════════════════════════════════ */
+function copyToClipboard(text){
+    if(navigator.clipboard?.writeText){
+        navigator.clipboard.writeText(text).catch(() => fallback(text));
+    } else fallback(text);
+}
+function fallback(text){
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try{document.execCommand('copy')}catch{}
+    document.body.removeChild(ta);
+}
+
+/* ═══════════════════════════════════════════════
+   RENDER SESSIONS
+═══════════════════════════════════════════════ */
+function renderSessions(sessions){
+    if(!sessions || sessions.length === 0){
+        E.sessionsList.innerHTML = `
+            <div class="empty-state">
+                <div class="icon">💗</div>
+                <p>No active sessions yet</p>
+                <small>Pair your first device using the form</small>
+            </div>
+        `;
+        return;
+    }
+
+    E.sessionsList.innerHTML = sessions.map(s => {
+        const state = s.state || 'disconnected';
+        const icon = state === 'connected' ? '✓' : state === 'pairing' ? '◌' : '!';
+        const uptime = formatUptime(s.uptime);
+        const num = s.number || '—';
+
+        return `
+        <div class="session-item" data-number="${num}">
+            <div class="session-info">
+                <div class="session-avatar ${state}">${icon}</div>
+                <div class="session-details">
+                    <div class="session-number">+${num}</div>
+                    <div class="session-meta">
+                        <span class="session-state ${state}">
+                            <span class="dot"></span>
+                            ${formatState(state)}
+                        </span>
+                        ${uptime !== '—' ? `<span>• ${uptime}</span>` : ''}
+                    </div>
                 </div>
             </div>
-            <div class="top-actions">
-                <button class="theme-button" id="themeButton" type="button" title="Change color theme">
-                    <span class="palette-dots" aria-hidden="true">
-                        <span class="palette-dot"></span>
-                        <span class="palette-dot"></span>
-                        <span class="palette-dot"></span>
-                    </span>
-                    <span id="themeName">Rose gold</span>
-                    <span class="theme-arrow" aria-hidden="true">↻</span>
-                </button>
-                <div class="live-status starting" id="statusBadge">
-                    <span class="status-dot"></span>
-                    <span id="statusText">STARTING</span>
-                </div>
+            <div class="session-actions">
+                <button class="btn btn-danger btn-sm" onclick="unpairSession('${num}')" title="Disconnect">✕</button>
             </div>
-        </header>
+        </div>
+        `;
+    }).join('');
+}
 
-        <section class="hero">
-            <div class="hero-copy">
-                <p class="eyebrow">SABA MD · FOR SABA</p>
-                <h1>
-                    Pair once.
-                    <span class="script">love always.</span>
-                </h1>
-                <p>
-                    Connect your WhatsApp to a bot made with <b>love, care, and 257+ commands</b>.
-                    Crafted for someone special —
-                    <span class="accent">brown hair wali 🌸</span>
-                </p>
-                <div class="feature-row" aria-label="Platform features">
-                    <div class="feature"><span class="feature-number">01 / LOVE</span><strong>Made for Saba</strong></div>
-                    <div class="feature"><span class="feature-number">02 / CORE</span><strong>257+ commands</strong></div>
-                    <div class="feature"><span class="feature-number">03 / HEART</span><strong>Pure dedication</strong></div>
-                </div>
-            </div>
+/* ═══════════════════════════════════════════════
+   UNPAIR SESSION
+═══════════════════════════════════════════════ */
+window.unpairSession = async function(number){
+    if(!confirm(`Disconnect +${number}?\n\nThis will remove the session. User will need to pair again.`)){
+        return;
+    }
 
-            <section class="console-card" aria-labelledby="pair-title">
-                <div class="card-top">
-                    <div class="card-identity">
-                        <div class="console-icon" aria-hidden="true">💗</div>
-                        <div>
-                            <p class="card-kicker">Sweet connection setup</p>
-                            <h2 class="card-heading" id="pair-title">Link your device</h2>
-                        </div>
-                    </div>
-                    <span class="card-version">v<span id="version">1.0.0</span></span>
-                </div>
-                <div class="progress" aria-hidden="true"><span></span><span></span><span></span></div>
-
-                <div class="console-body">
-                    <form id="pairForm">
-                        <label class="field-label" for="phone">Your WhatsApp number 💌</label>
-                        <div class="input-wrap">
-                            <span class="input-prefix">+</span>
-                            <input id="phone" name="phone" inputmode="numeric" autocomplete="tel"
-                                placeholder="923xxxxxxxxx" maxlength="15" required />
-                        </div>
-                        <p class="input-hint">Digits only · with country code · 10-15 digits 🌸</p>
-                        <button class="pair-button" id="pairBtn" type="submit">
-                            <span class="button-icon">💗</span>
-                            <span id="buttonText">Generate my code</span>
-                        </button>
-                    </form>
-
-                    <div class="result" id="result" role="status" aria-live="polite">
-                        Enter your number to receive a sweet pairing code 💗
-                    </div>
-
-                    <section class="guide" id="guide">
-                        <button class="guide-trigger" id="guideTrigger" type="button" aria-expanded="false" aria-controls="guideContent">
-                            <span class="guide-title"><span aria-hidden="true">🌸</span> How to link your device</span>
-                            <span class="guide-chevron" aria-hidden="true">⌄</span>
-                        </button>
-                        <div class="guide-content" id="guideContent">
-                            <ol>
-                                <li>Enter your WhatsApp number with country code.</li>
-                                <li>Tap <strong>Generate my code</strong> and copy it.</li>
-                                <li>In WhatsApp, open <strong>Settings → Linked Devices → Link with phone number</strong>.</li>
-                                <li>Enter the code and wait for it to connect 💗</li>
-                            </ol>
-                        </div>
-                    </section>
-                </div>
-
-                <div class="console-foot">
-                    <span>Baileys multi-device core</span>
-                    <strong id="connectionText">● STARTING</strong>
-                </div>
-            </section>
-        </section>
-
-        <section class="telemetry" aria-label="Bot telemetry">
-            <div class="telemetry-panel">
-                <div class="panel-heading">
-                    <h2>Little love notes</h2>
-                    <span id="telemetryState">waiting for link</span>
-                </div>
-                <div class="activity-list">
-                    <div class="activity-item">
-                        <span class="activity-icon" aria-hidden="true">💚</span>
-                        <div><strong>Crafted with care</strong><small>Every command written with love for Saba</small></div>
-                    </div>
-                    <div class="activity-item">
-                        <span class="activity-icon" aria-hidden="true">🌸</span>
-                        <div><strong>Always here for you</strong><small>Session recovery keeps things smooth</small></div>
-                    </div>
-                    <div class="activity-item">
-                        <span class="activity-icon" aria-hidden="true">💗</span>
-                        <div><strong>Made by Arslan Tech's</strong><small>Specially for someone very special</small></div>
-                    </div>
-                </div>
-            </div>
-            <div class="telemetry-panel">
-                <div class="panel-heading">
-                    <h2>System status</h2>
-                    <span>live</span>
-                </div>
-                <div class="stats-grid">
-                    <div class="stat"><span class="stat-label">◉ state</span><strong class="stat-value" id="stateValue">STARTING</strong></div>
-                    <div class="stat"><span class="stat-label">◷ uptime</span><strong class="stat-value" id="uptimeValue">—</strong></div>
-                    <div class="stat"><span class="stat-label">⌘ runtime</span><strong class="stat-value" id="runtimeValue">Node 20</strong></div>
-                    <div class="stat"><span class="stat-label">◈ mode</span><strong class="stat-value" id="modeValue">—</strong></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ─── DEDICATION ─── -->
-        <section class="dedication">
-            <h2 class="dedication-title">For brown hair wali 💗</h2>
-            <p class="dedication-sub">— Arslan Tech's 💚</p>
-        </section>
-
-        <footer>
-            <span>© 2026 ARSLAN TECH'S · <span class="heart">💗</span> for Saba</span>
-            <nav class="footer-links" aria-label="Footer links">
-                <a href="/health">Health</a>
-                <a href="https://github.com/ArslanTech-dev/Saba-MD" target="_blank" rel="noreferrer">GitHub ↗</a>
-            </nav>
-        </footer>
-    </main>
-
-    <script>
-        const form = document.getElementById('pairForm');
-        const phoneInput = document.getElementById('phone');
-        const pairBtn = document.getElementById('pairBtn');
-        const buttonText = document.getElementById('buttonText');
-        const result = document.getElementById('result');
-        const statusBadge = document.getElementById('statusBadge');
-        const statusText = document.getElementById('statusText');
-        const connectionText = document.getElementById('connectionText');
-        const stateValue = document.getElementById('stateValue');
-        const uptimeValue = document.getElementById('uptimeValue');
-        const runtimeValue = document.getElementById('runtimeValue');
-        const modeValue = document.getElementById('modeValue');
-        const telemetryState = document.getElementById('telemetryState');
-        const version = document.getElementById('version');
-        const themeButton = document.getElementById('themeButton');
-        const themeName = document.getElementById('themeName');
-        const guide = document.getElementById('guide');
-        const guideTrigger = document.getElementById('guideTrigger');
-        let busy = false;
-        let codeExpiresAt = 0;
-        let hasCode = false;
-        let lastStatus = null;
-        let themeIndex = 0;
-
-        // Elegant themes — warm & lovely
-        const themes = [
-            {
-                name: 'Rose gold',
-                colors: {
-                    '--gold': '#e8a87c',
-                    '--gold-bright': '#ffb88c',
-                    '--cream': '#f4d9c0',
-                    '--rose': '#d4788a',
-                    '--bg-start': '#1a0a0f',
-                    '--bg-mid': '#2d1018',
-                    '--bg-end': '#4a1a26',
-                    '--glow-top': 'rgba(232, 168, 124, .35)',
-                    '--glow-bottom': 'rgba(212, 120, 130, .32)',
-                    '--accent-wash': 'rgba(232, 168, 124, .14)',
-                    '--accent-shadow': 'rgba(232, 168, 124, .28)',
-                    '--brand-shadow': 'rgba(232, 168, 124, .35)',
-                    '--button-shadow': 'rgba(212, 120, 130, .3)',
-                    '--status-border': 'rgba(232, 168, 124, .35)',
-                    '--status-bg': 'rgba(232, 168, 124, .1)',
-                },
-            },
-            {
-                name: 'Chocolate',
-                colors: {
-                    '--gold': '#c98a5c',
-                    '--gold-bright': '#e8a06c',
-                    '--cream': '#e8c9a8',
-                    '--rose': '#b86878',
-                    '--bg-start': '#140a08',
-                    '--bg-mid': '#251410',
-                    '--bg-end': '#3d201a',
-                    '--glow-top': 'rgba(201, 138, 92, .35)',
-                    '--glow-bottom': 'rgba(184, 104, 120, .32)',
-                    '--accent-wash': 'rgba(201, 138, 92, .14)',
-                    '--accent-shadow': 'rgba(201, 138, 92, .28)',
-                    '--brand-shadow': 'rgba(201, 138, 92, .35)',
-                    '--button-shadow': 'rgba(184, 104, 120, .3)',
-                    '--status-border': 'rgba(201, 138, 92, .35)',
-                    '--status-bg': 'rgba(201, 138, 92, .1)',
-                },
-            },
-            {
-                name: 'Wine',
-                colors: {
-                    '--gold': '#d4a5a5',
-                    '--gold-bright': '#e8b8b8',
-                    '--cream': '#f0d4d4',
-                    '--rose': '#a85068',
-                    '--bg-start': '#160810',
-                    '--bg-mid': '#2d0f22',
-                    '--bg-end': '#4a1838',
-                    '--glow-top': 'rgba(212, 165, 165, .35)',
-                    '--glow-bottom': 'rgba(168, 80, 104, .32)',
-                    '--accent-wash': 'rgba(212, 165, 165, .14)',
-                    '--accent-shadow': 'rgba(212, 165, 165, .28)',
-                    '--brand-shadow': 'rgba(212, 165, 165, .35)',
-                    '--button-shadow': 'rgba(168, 80, 104, .3)',
-                    '--status-border': 'rgba(212, 165, 165, .35)',
-                    '--status-bg': 'rgba(212, 165, 165, .1)',
-                },
-            },
-            {
-                name: 'Amber',
-                colors: {
-                    '--gold': '#ffb347',
-                    '--gold-bright': '#ffc766',
-                    '--cream': '#ffe0b3',
-                    '--rose': '#d4805a',
-                    '--bg-start': '#1a0f05',
-                    '--bg-mid': '#2d1a0a',
-                    '--bg-end': '#4a2810',
-                    '--glow-top': 'rgba(255, 179, 71, .35)',
-                    '--glow-bottom': 'rgba(212, 128, 90, .32)',
-                    '--accent-wash': 'rgba(255, 179, 71, .14)',
-                    '--accent-shadow': 'rgba(255, 179, 71, .28)',
-                    '--brand-shadow': 'rgba(255, 179, 71, .35)',
-                    '--button-shadow': 'rgba(212, 128, 90, .3)',
-                    '--status-border': 'rgba(255, 179, 71, .35)',
-                    '--status-bg': 'rgba(255, 179, 71, .1)',
-                },
-            },
-        ];
-
-        function applyTheme(index, save = true) {
-            themeIndex = (index + themes.length) % themes.length;
-            const theme = themes[themeIndex];
-            Object.entries(theme.colors).forEach(([property, value]) => {
-                document.documentElement.style.setProperty(property, value);
-            });
-            themeName.textContent = theme.name;
-            themeButton.setAttribute('aria-label', `Color theme: ${theme.name}. Click to change.`);
-            if (save) {
-                try { localStorage.setItem('saba-love-theme', String(themeIndex)); } catch {}
-            }
-        }
-
-        try {
-            const savedTheme = Number(localStorage.getItem('saba-love-theme'));
-            if (Number.isInteger(savedTheme) && savedTheme >= 0) themeIndex = savedTheme;
-        } catch {}
-        applyTheme(themeIndex, false);
-
-        themeButton.addEventListener('click', () => applyTheme(themeIndex + 1));
-
-        function formatUptime(seconds) {
-            if (!Number.isFinite(seconds) || seconds < 0) return '—';
-            const days = Math.floor(seconds / 86400);
-            const hours = Math.floor((seconds % 86400) / 3600);
-            const minutes = Math.floor((seconds % 3600) / 60);
-            if (days) return `${days}d ${hours}h`;
-            if (hours) return `${hours}h ${minutes}m`;
-            return `${minutes}m ${seconds % 60}s`;
-        }
-
-        function setResult(message, kind = '') {
-            hasCode = false;
-            result.className = `result ${kind}`.trim();
-            result.textContent = message;
-        }
-
-        function showCode(code) {
-            hasCode = true;
-            codeExpiresAt = Date.now() + 45000;
-            result.className = 'result success';
-            result.replaceChildren();
-            const kicker = document.createElement('span');
-            kicker.className = 'result-kicker';
-            kicker.textContent = '💗 Your sweet pairing code';
-            const heading = document.createElement('div');
-            heading.className = 'code-heading';
-            const value = document.createElement('code');
-            value.textContent = code;
-            const copy = document.createElement('button');
-            copy.className = 'copy-button';
-            copy.type = 'button';
-            copy.textContent = 'Copy';
-            copy.addEventListener('click', async () => {
-                try {
-                    await navigator.clipboard.writeText(String(code).replace(/-/g, ''));
-                    copy.textContent = 'Copied 💗';
-                    setTimeout(() => { copy.textContent = 'Copy'; }, 1600);
-                } catch {
-                    copy.textContent = 'Select';
-                }
-            });
-            heading.append(value, copy);
-            const countdown = document.createElement('span');
-            countdown.className = 'countdown';
-            countdown.id = 'countdown';
-            result.append(kicker, heading, countdown);
-            updateCountdown();
-        }
-
-        function updateCountdown() {
-            const countdown = document.getElementById('countdown');
-            if (!countdown || !hasCode) return;
-            const remaining = Math.max(0, Math.ceil((codeExpiresAt - Date.now()) / 1000));
-            countdown.textContent = remaining
-                ? `Code expires in ${remaining}s · enter it in WhatsApp 💗`
-                : 'Code expired · request a fresh one 🌸';
-            if (!remaining) {
-                hasCode = false;
-                result.classList.remove('success');
-            }
-        }
-
-        function setStatus(data) {
-            lastStatus = data;
-            const rawState = String(data.state || 'starting').toLowerCase();
-            const label = data.connected ? 'CONNECTED' :
-                rawState === 'pairing' ? 'PAIRING READY' :
-                rawState === 'disconnected' ? 'RECOVERING' : rawState.toUpperCase();
-            const statusClass = data.connected ? '' :
-                rawState === 'disconnected' ? 'recovering' :
-                rawState === 'starting' ? 'starting' : '';
-            statusBadge.className = `live-status ${statusClass}`.trim();
-            statusText.textContent = label;
-            connectionText.textContent = `● ${label}`;
-            stateValue.textContent = label;
-            telemetryState.textContent = data.connected ? 'device linked 💗' : `bot ${rawState}`;
-            uptimeValue.textContent = formatUptime(Number(data.uptimeSeconds));
-            if (data.nodeVersion) runtimeValue.textContent = `Node ${String(data.nodeVersion).split('.')[0]}`;
-            if (data.version) version.textContent = data.version;
-            if (data.publicPairing != null) modeValue.textContent = data.publicPairing ? 'PUBLIC' : 'PRIVATE';
-            pairBtn.disabled = Boolean(data.connected) || busy;
-            if (data.connected && !hasCode) setResult('Bot is already connected to WhatsApp 💚', 'success');
-            if (rawState === 'disconnected' && !hasCode) setResult('Bot is recovering for a fresh pairing 🌸', 'error');
-        }
-
-        async function refreshStatus() {
-            try {
-                const response = await fetch('/api/status', { cache: 'no-store' });
-                if (!response.ok) throw new Error('Status unavailable');
-                setStatus(await response.json());
-            } catch {
-                statusBadge.className = 'live-status offline';
-                statusText.textContent = 'OFFLINE';
-                connectionText.textContent = '● OFFLINE';
-                stateValue.textContent = 'OFFLINE';
-                telemetryState.textContent = 'service unavailable';
-                pairBtn.disabled = true;
-                if (!hasCode) setResult('Pairing service is temporarily unavailable 🌸', 'error');
-            }
-        }
-
-        guideTrigger.addEventListener('click', () => {
-            const open = guide.classList.toggle('open');
-            guideTrigger.setAttribute('aria-expanded', String(open));
+    try{
+        const res = await fetch(`${API}/api/unpair`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({number}),
         });
+        const data = await res.json();
 
-        form.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const phone = phoneInput.value.replace(/\D/g, '');
-            phoneInput.value = phone;
-            if (!/^\d{10,15}$/.test(phone)) {
-                setResult('Enter a valid number with country code 🌸', 'error');
-                phoneInput.focus();
-                return;
-            }
+        if(data.success){
+            toast(`Unpaired +${number}`, 'success');
+            await refreshStatus();
+        } else {
+            toast(data.error || 'Failed to unpair', 'error');
+        }
+    }catch{
+        toast('Network error', 'error');
+    }
+};
 
-            busy = true;
-            pairBtn.disabled = true;
-            buttonText.textContent = 'Generating...';
-            setResult('Requesting a sweet code from the live bot 💗', 'loading');
-            try {
-                const response = await fetch('/api/pair', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ number: phone }),
-                });
-                const data = await response.json();
-                if (data.success && data.code) showCode(data.code);
-                else setResult(data.error || 'Unable to generate a pairing code', 'error');
-            } catch {
-                setResult('Network error. Check the live bot and try again 🌸', 'error');
-            } finally {
-                busy = false;
-                buttonText.textContent = 'Generate my code';
-                if (lastStatus) setStatus(lastStatus);
-                else refreshStatus();
-            }
+/* ═══════════════════════════════════════════════
+   REFRESH STATUS
+═══════════════════════════════════════════════ */
+async function refreshStatus(){
+    try{
+        const res = await fetch(`${API}/api/status`, {cache:'no-store'});
+        const data = await res.json();
+
+        if(!data.success) throw new Error('Bad response');
+
+        // Nav pills
+        const total = data.totalSessions || 0;
+        const max = data.maxSessions || 10;
+        E.slotText.textContent = `${total}/${max}`;
+
+        E.statusPill.classList.remove('online', 'ready');
+        if(total > 0){
+            E.statusPill.classList.add('online');
+            E.statusText.textContent = 'Active';
+        } else {
+            E.statusPill.classList.add('ready');
+            E.statusText.textContent = 'Ready';
+        }
+
+        // Stats
+        E.statActive.textContent = total;
+        E.statSlots.textContent = max - total;
+        E.statUptime.textContent = formatUptime(data.uptimeSeconds);
+
+        // Pair button state
+        if(total >= max){
+            E.pairBtn.disabled = true;
+            E.pairBadge.textContent = 'Full';
+        } else {
+            E.pairBtn.disabled = S.busy;
+            E.pairBadge.textContent = 'Ready';
+        }
+
+        // Sessions list
+        renderSessions(data.sessions || []);
+
+    }catch(err){
+        E.statusText.textContent = 'Offline';
+        E.statusPill.classList.remove('online', 'ready');
+        renderSessions([]);
+    }
+}
+
+/* ═══════════════════════════════════════════════
+   GENERATE PAIRING CODE
+═══════════════════════════════════════════════ */
+async function generateCode(){
+    const number = E.phoneInput.value.replace(/\D/g, '');
+
+    if(!number || number.length < 10){
+        toast('Enter a valid number with country code', 'error');
+        E.phoneInput.focus();
+        return;
+    }
+
+    hideAll();
+    show(E.loadingState);
+    S.busy = true;
+    E.pairBtn.disabled = true;
+    E.btnLabel.textContent = 'Generating...';
+    E.btnIcon.textContent = '◌';
+
+    try{
+        const res = await fetch(`${API}/api/pair`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({number}),
         });
+        const data = await res.json();
+        hideAll();
 
-        setInterval(updateCountdown, 1000);
+        if(!res.ok || !data.success){
+            E.errMsg.textContent = data.error || 'Pairing failed.';
+            show(E.errorState);
+            toast(data.error || 'Pairing failed', 'error');
+            return;
+        }
+
+        S.code = data.code;
+        E.codeValue.textContent = data.code;
+        show(E.codeState);
+        startTimer(data.expiresIn || 45);
+        toast('Pairing code generated! 💗', 'success');
         refreshStatus();
-        setInterval(refreshStatus, 5000);
-    </script>
+
+    }catch{
+        hideAll();
+        E.errMsg.textContent = 'Network error. Please try again.';
+        show(E.errorState);
+        toast('Network error', 'error');
+    }finally{
+        S.busy = false;
+        E.btnLabel.textContent = 'Generate Pairing Code';
+        E.btnIcon.textContent = '💗';
+        if(E.statSlots.textContent === '0'){
+            E.pairBtn.disabled = true;
+        } else {
+            E.pairBtn.disabled = false;
+        }
+    }
+}
+
+/* ═══════════════════════════════════════════════
+   TIMER
+═══════════════════════════════════════════════ */
+function startTimer(seconds){
+    clearInterval(S.timerId);
+    let remaining = seconds;
+    S.codeExpiresAt = Date.now() + seconds * 1000;
+    E.timerFill.style.width = '100%';
+
+    S.timerId = setInterval(() => {
+        remaining -= 1;
+        E.timerFill.style.width = Math.max(0, (remaining / seconds) * 100) + '%';
+        if(remaining <= 0){
+            clearInterval(S.timerId);
+            toast('Code expired', 'info');
+        }
+    }, 1000);
+}
+
+/* ═══════════════════════════════════════════════
+   EVENTS
+═══════════════════════════════════════════════ */
+E.phoneInput.addEventListener('input', e => {
+    e.target.value = e.target.value.replace(/[^\d]/g, '');
+});
+E.phoneInput.addEventListener('keypress', e => {
+    if(e.key === 'Enter'){ e.preventDefault(); generateCode(); }
+});
+
+E.pairBtn.addEventListener('click', generateCode);
+
+E.codeValue.addEventListener('click', () => {
+    if(!S.code) return;
+    copyToClipboard(S.code.replace(/-/g, ''));
+    toast('Code copied! 💗', 'success');
+});
+
+$('copyBtn').addEventListener('click', () => {
+    if(!S.code) return;
+    copyToClipboard(S.code.replace(/-/g, ''));
+    toast('Code copied! 💗', 'success');
+});
+
+$('regenBtn').addEventListener('click', () => {
+    clearInterval(S.timerId);
+    hideAll();
+    generateCode();
+});
+
+$('retryBtn').addEventListener('click', () => {
+    hideAll();
+    E.phoneInput.focus();
+});
+
+$('refreshBtn').addEventListener('click', () => {
+    toast('Refreshing...', 'info');
+    refreshStatus();
+});
+
+/* ═══════════════════════════════════════════════
+   BOOT
+═══════════════════════════════════════════════ */
+refreshStatus();
+S.pollId = setInterval(refreshStatus, 6000);
+
+console.log(
+    '%c💚 Saba MD %c— Multi-User Dashboard',
+    'background:linear-gradient(135deg,#e8a87c,#f4d9c0);color:#2d1018;padding:6px 12px;border-radius:6px 0 0 6px;font-weight:800;',
+    'background:#2a1220;color:#e8a87c;padding:6px 12px;border-radius:0 6px 6px 0;font-weight:600;'
+);
+
+})();
+</script>
+
 </body>
 </html>
