@@ -1,8 +1,8 @@
 // ===============================================
-//  💚 SABA MD — MESSAGE HANDLER (FINAL)
+//  💚 SABA MD — MESSAGE HANDLER (Multi-Session)
 //  👨‍💻 Made by Arslan Tech's for Saba
-//  🎨 Royal · React · Antilink · Antidelete · Welcome
-//  🔒 FINAL version — no more edits needed
+//  🎯 Per-session routing + caching
+//  🔒 FINAL multi-user version
 // ===============================================
 
 const fs   = require('fs-extra');
@@ -14,7 +14,7 @@ const { isOnCooldown } = require('../utils/antiSpam');
 const { getSettings, saveSettings } = require('../utils/groupSettings');
 
 // ===============================================
-//  📦 PLUGIN REGISTRY
+//  📦 PLUGIN REGISTRY (Shared across all sessions)
 // ===============================================
 const plugins = new Map();
 const aliases = new Map();
@@ -22,62 +22,82 @@ const aliases = new Map();
 // ===============================================
 //  🎨 STYLE
 // ===============================================
-const TOP  = '─❍══ ⃟ ⃟ ⃟ ⃟ ⃟══⊷❍';
+const TOP  = '─❍══ ⃟ ⃟ ⃟ ⃟ ══⊷❍';
 const MID  = '━━━━━━━━━━━━━━━━━━';
-const THIN = '┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄';
-const BOT  = '─❍══ ⃟ ⃟ ⃟ ⃟ ⃟══⊷❍';
+const BOT  = '─❍══ ⃟ ⃟ ╟ ══⊷❍';
 
 // ===============================================
-//  💾 MESSAGE CACHE (for antidelete)
+//  💾 MESSAGE CACHE — PER SESSION
+//  Format: Map<sessionNumber, Map<msgId, cacheEntry>>
 // ===============================================
-const MESSAGE_CACHE = new Map();
-const CACHE_TTL = 60 * 60 * 1000;
-const CACHE_MAX = 5000;
+const SESSION_CACHE = new Map();
+const CACHE_TTL = 60 * 60 * 1000;   // 1 hour
+const CACHE_MAX = 1000;              // per session
 
-function cacheMessage(msg) {
+function getCacheForSession(sessionNumber) {
+    if (!SESSION_CACHE.has(sessionNumber)) {
+        SESSION_CACHE.set(sessionNumber, new Map());
+    }
+    return SESSION_CACHE.get(sessionNumber);
+}
+
+function cacheMessage(sessionNumber, msg) {
     try {
         const id = msg.key.id;
         if (!id) return;
-        MESSAGE_CACHE.set(id, {
+
+        const cache = getCacheForSession(sessionNumber);
+        cache.set(id, {
             msg,
             from: msg.key.remoteJid,
             sender: msg.key.participant || msg.key.remoteJid,
             timestamp: Date.now(),
         });
-        if (MESSAGE_CACHE.size > CACHE_MAX) {
+
+        // Cleanup old entries
+        if (cache.size > CACHE_MAX) {
             const now = Date.now();
-            for (const [k, v] of MESSAGE_CACHE) {
-                if (now - v.timestamp > CACHE_TTL) MESSAGE_CACHE.delete(k);
+            for (const [k, v] of cache) {
+                if (now - v.timestamp > CACHE_TTL) cache.delete(k);
             }
         }
     } catch {}
 }
 
-function getCachedMessage(id) {
-    const entry = MESSAGE_CACHE.get(id);
+function getCachedMessage(sessionNumber, id) {
+    const cache = SESSION_CACHE.get(sessionNumber);
+    if (!cache) return null;
+
+    const entry = cache.get(id);
     if (!entry) return null;
+
     if (Date.now() - entry.timestamp > CACHE_TTL) {
-        MESSAGE_CACHE.delete(id);
+        cache.delete(id);
         return null;
     }
     return entry;
 }
 
+function clearSessionCache(sessionNumber) {
+    SESSION_CACHE.delete(sessionNumber);
+}
+
 // ===============================================
-//  🔄 LOAD ALL PLUGINS
+//  🔄 LOAD ALL PLUGINS (only once)
 // ===============================================
 function loadPlugins() {
     const pluginDir = path.join(__dirname, '..', 'plugins');
 
     if (!fs.existsSync(pluginDir)) {
-        fancyLog('WARN', 'plugins/ folder not found — creating empty one');
+        fancyLog('WARN', 'plugins/ folder not found');
         fs.ensureDirSync(pluginDir);
         return;
     }
 
     const files = fs.readdirSync(pluginDir).filter(f => f.endsWith('.js'));
+
     if (files.length === 0) {
-        fancyLog('WARN', 'No plugins found in plugins/');
+        fancyLog('WARN', 'No plugins found');
         return;
     }
 
@@ -92,11 +112,10 @@ function loadPlugins() {
             const list = Array.isArray(mod) ? mod : [mod];
 
             for (const p of list) {
-                if (!p.name || typeof p.run !== 'function') {
-                    fancyLog('WARN', `Skipping invalid plugin: ${file}`);
-                    continue;
-                }
+                if (!p.name || typeof p.run !== 'function') continue;
+
                 plugins.set(p.name.toLowerCase(), p);
+
                 if (Array.isArray(p.aliases)) {
                     for (const a of p.aliases) {
                         aliases.set(a.toLowerCase(), p.name.toLowerCase());
@@ -124,10 +143,6 @@ function containsLink(text) {
     return LINK_REGEX.test(text);
 }
 
-function isGroupLink(text) {
-    return /chat\.whatsapp\.com\//i.test(text || '');
-}
-
 // ===============================================
 //  📸 MEDIA TYPE DETECTION
 // ===============================================
@@ -135,18 +150,13 @@ function getMediaType(msg) {
     const m = msg.message;
     if (!m) return null;
 
-    if (m.imageMessage)           return { type: 'image',    data: m.imageMessage,    mimetype: m.imageMessage.mimetype };
-    if (m.videoMessage)           return { type: 'video',    data: m.videoMessage,    mimetype: m.videoMessage.mimetype };
-    if (m.audioMessage)           return { type: 'audio',    data: m.audioMessage,    mimetype: m.audioMessage.mimetype };
-    if (m.stickerMessage)         return { type: 'sticker',  data: m.stickerMessage,  mimetype: m.stickerMessage.mimetype };
-    if (m.documentMessage)        return { type: 'document', data: m.documentMessage, mimetype: m.documentMessage.mimetype };
-    if (m.contactMessage)         return { type: 'contact',  data: m.contactMessage };
-    if (m.locationMessage)        return { type: 'location', data: m.locationMessage };
+    if (m.imageMessage)           return { type: 'image',    data: m.imageMessage };
+    if (m.videoMessage)           return { type: 'video',    data: m.videoMessage };
+    if (m.audioMessage)           return { type: 'audio',    data: m.audioMessage };
+    if (m.stickerMessage)         return { type: 'sticker',  data: m.stickerMessage };
+    if (m.documentMessage)        return { type: 'document', data: m.documentMessage };
     if (m.viewOnceMessage)        return { type: 'viewonce', data: m.viewOnceMessage };
     if (m.viewOnceMessageV2)      return { type: 'viewonce', data: m.viewOnceMessageV2 };
-    if (m.buttonsResponseMessage) return { type: 'button',   data: m.buttonsResponseMessage };
-    if (m.listResponseMessage)    return { type: 'list',     data: m.listResponseMessage };
-    if (m.reactionMessage)        return { type: 'reaction', data: m.reactionMessage };
 
     return null;
 }
@@ -159,6 +169,7 @@ async function downloadQuotedMedia(msg, type = 'image') {
         const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
         const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
         if (!quoted) return null;
+
         const mediaMsg = quoted[`${type}Message`];
         if (!mediaMsg) return null;
 
@@ -176,7 +187,7 @@ async function downloadQuotedMedia(msg, type = 'image') {
 // ===============================================
 //  🔗 ANTILINK HANDLER
 // ===============================================
-async function handleAntilink(sock, msg, from, sender, text) {
+async function handleAntilink(sock, msg, from, sender, text, sessionNumber) {
     try {
         const settings = getSettings(from);
         if (!settings.antilink) return false;
@@ -209,10 +220,10 @@ ${MID}
    Links are not allowed here!
 ${MID}
    ├ 👑 *Action* : ${action === 'kick' ? 'Kicked' : 'Warning'}
-   ├ 🕒 *Time*   : ${new Date().toLocaleTimeString(config.TIMEZONE)}
+   ├ 🕒 *Time*   : ${helper.nowTime()}
    └ 💡 *Note*   : Repeated = Kick
 ${MID}
-   💖 *Saba MD — Arslan Tech's*
+   💖 *Saba MD*
 ${BOT}`;
 
         await sock.sendMessage(from, {
@@ -224,10 +235,10 @@ ${BOT}`;
             await sock.groupParticipantsUpdate(from, [sender], 'remove');
         }
 
-        fancyLog('BLOCK', `Antilink triggered in ${from} by ${sender}`);
+        fancyLog('BLOCK', `[${sessionNumber}] Antilink triggered in ${from}`);
         return true;
     } catch (err) {
-        fancyLog('ERROR', `Antilink: ${err.message}`);
+        fancyLog('ERROR', `[${sessionNumber}] Antilink: ${err.message}`);
         return false;
     }
 }
@@ -235,7 +246,7 @@ ${BOT}`;
 // ===============================================
 //  🗑️ ANTIDELETE HANDLER
 // ===============================================
-async function handleAntidelete(sock, updates) {
+async function handleAntidelete(sock, updates, sessionNumber) {
     try {
         for (const u of updates) {
             const isDeleted =
@@ -248,7 +259,7 @@ async function handleAntidelete(sock, updates) {
             const msgId = u.key?.id;
             if (!msgId) continue;
 
-            const cached = getCachedMessage(msgId);
+            const cached = getCachedMessage(sessionNumber, msgId);
             if (!cached) continue;
 
             const { msg: originalMsg, from, sender } = cached;
@@ -275,17 +286,16 @@ async function handleAntidelete(sock, updates) {
 ${MID}
    👤 *Sender* : @${helper.cleanJid(sender)}
    📍 *Chat*   : ${isGroup ? 'Group' : 'DM'}
-   🕒 *Time*   : ${new Date().toLocaleTimeString(config.TIMEZONE)}
+   🕒 *Time*   : ${helper.nowTime()}
 ${MID}
-   📝 *Deleted Message:*
-${THIN}`;
+   📝 *Deleted Message:*`;
 
             const mentions = [sender];
 
             try {
                 if (text) {
                     await sock.sendMessage(from, {
-                        text: `${header}\n   ${text}\n${MID}\n   💖 *Saba MD — Arslan Tech's*\n${BOT}`,
+                        text: `${header}\n   ${text}\n${MID}\n   💖 *Saba MD*\n${BOT}`,
                         mentions,
                     });
                 }
@@ -302,56 +312,47 @@ ${THIN}`;
                             }
 
                             if (buffer.length > 0) {
-                                const caption = media.data.caption
-                                    ? `${header}\n   ${media.data.caption}\n${MID}\n   💖 *Saba MD*\n${BOT}`
-                                    : `${header}\n   [${media.type.toUpperCase()}]\n${MID}\n   💖 *Saba MD*\n${BOT}`;
-
+                                const caption = `${header}\n   [${media.type.toUpperCase()}]\n${MID}\n   💖 *Saba MD*\n${BOT}`;
                                 const payload = { caption, mentions };
+
                                 if (media.type === 'image')    payload.image = buffer;
                                 if (media.type === 'video')    payload.video = buffer;
                                 if (media.type === 'audio')    { payload.audio = buffer; payload.mimetype = 'audio/mp4'; }
                                 if (media.type === 'sticker')  payload.sticker = buffer;
-                                if (media.type === 'document') {
-                                    payload.document = buffer;
-                                    payload.mimetype = media.mimetype || 'application/octet-stream';
-                                    payload.fileName = media.data.fileName || 'file';
-                                }
 
                                 await sock.sendMessage(from, payload);
                             }
                         } catch (err) {
-                            fancyLog('ERROR', `Antidelete media: ${err.message}`);
+                            fancyLog('ERROR', `[${sessionNumber}] Antidelete media: ${err.message}`);
                         }
-                    } else if (media.type === 'viewonce') {
-                        await sock.sendMessage(from, {
-                            text: `${header}\n   [VIEW-ONCE MEDIA]\n${MID}\n   💖 *Saba MD*\n${BOT}`,
-                            mentions,
-                        });
                     }
                 }
 
-                fancyLog('SUCCESS', `Antidelete triggered — ${msgId}`);
+                fancyLog('SUCCESS', `[${sessionNumber}] Antidelete — ${msgId}`);
             } catch (err) {
-                fancyLog('ERROR', `Antidelete send: ${err.message}`);
+                fancyLog('ERROR', `[${sessionNumber}] Antidelete send: ${err.message}`);
             }
 
-            MESSAGE_CACHE.delete(msgId);
+            // Cleanup
+            const cache = SESSION_CACHE.get(sessionNumber);
+            if (cache) cache.delete(msgId);
         }
     } catch (err) {
-        fancyLog('ERROR', `handleAntidelete: ${err.message}`);
+        fancyLog('ERROR', `[${sessionNumber}] handleAntidelete: ${err.message}`);
     }
 }
 
 // ===============================================
 //  👋 WELCOME / GOODBYE HANDLER
 // ===============================================
-async function handleGroupParticipants(sock, update) {
+async function handleGroupParticipants(sock, update, sessionNumber) {
     try {
         const { id, participants, action } = update;
         if (!id || !participants || !action) return;
 
         const settings = getSettings(id);
 
+        // ─── Welcome ───
         if (action === 'add' && settings.welcome) {
             try {
                 const meta = await sock.groupMetadata(id);
@@ -365,19 +366,19 @@ ${MID}
    🎀 Welcome to *${meta.subject}*
 ${MID}
    ├ 👥 *Members* : ${meta.participants.length}
-   ├ 🕒 *Time*    : ${new Date().toLocaleTimeString(config.TIMEZONE)}
-   ├ 📅 *Date*    : ${new Date().toLocaleDateString(config.TIMEZONE)}
+   ├ 🕒 *Time*    : ${helper.nowTime()}
    └ 🌸 *Enjoy your stay!*
 ${MID}
-   💖 *Saba MD — Arslan Tech's*
+   💖 *Saba MD*
 ${BOT}`;
                     await helper.sendWithLogo(sock, id, caption, null, [jid]);
                 }
             } catch (err) {
-                fancyLog('ERROR', `Welcome: ${err.message}`);
+                fancyLog('ERROR', `[${sessionNumber}] Welcome: ${err.message}`);
             }
         }
 
+        // ─── Goodbye ───
         if (action === 'remove' && settings.goodbye) {
             try {
                 const meta = await sock.groupMetadata(id);
@@ -390,41 +391,42 @@ ${MID}
    🌸 *@${num}* has left the group
 ${MID}
    ├ 👥 *Remaining* : ${meta.participants.length}
-   ├ 🕒 *Time*      : ${new Date().toLocaleTimeString(config.TIMEZONE)}
+   ├ 🕒 *Time*      : ${helper.nowTime()}
    └ 💚 *We'll miss you!*
 ${MID}
-   💖 *Saba MD — Arslan Tech's*
+   💖 *Saba MD*
 ${BOT}`;
                     await helper.sendWithLogo(sock, id, caption, null, [jid]);
                 }
             } catch (err) {
-                fancyLog('ERROR', `Goodbye: ${err.message}`);
+                fancyLog('ERROR', `[${sessionNumber}] Goodbye: ${err.message}`);
             }
         }
     } catch (err) {
-        fancyLog('ERROR', `GroupUpdate: ${err.message}`);
+        fancyLog('ERROR', `[${sessionNumber}] GroupUpdate: ${err.message}`);
     }
 }
 
 // ===============================================
 //  🎭 REACTION HANDLER
 // ===============================================
-async function handleReaction(sock, reactions) {
+async function handleReaction(sock, reactions, sessionNumber) {
     try {
         for (const r of reactions) {
             const reaction = r.reaction?.text;
             if (!reaction) continue;
-            fancyLog('MESSAGE', `Reaction: ${reaction} on ${r.key.id}`);
+            fancyLog('MESSAGE', `[${sessionNumber}] Reaction: ${reaction}`);
         }
     } catch (err) {
-        fancyLog('ERROR', `Reaction: ${err.message}`);
+        fancyLog('ERROR', `[${sessionNumber}] Reaction: ${err.message}`);
     }
 }
 
 // ===============================================
-//  📩 MAIN MESSAGE HANDLER
+//  📩 MAIN MESSAGE HANDLER (Multi-Session)
+//  ✅ NEW 3rd parameter: sessionNumber
 // ===============================================
-async function handleMessage(sock, msg) {
+async function handleMessage(sock, msg, sessionNumber = 'unknown') {
     try {
         if (!msg.message) return;
         if (msg.key.fromMe) return;
@@ -438,16 +440,17 @@ async function handleMessage(sock, msg) {
         if (from === 'status@broadcast') return;
 
         // ─── CACHE (for antidelete) ───
-        cacheMessage(msg);
+        cacheMessage(sessionNumber, msg);
 
         // ─── ANTILINK ───
         if (isGroup && text && !isOwner) {
-            const blocked = await handleAntilink(sock, msg, from, sender, text);
+            const blocked = await handleAntilink(sock, msg, from, sender, text, sessionNumber);
             if (blocked) return;
         }
 
         if (!text) return;
 
+        // ─── Prefix check ───
         const prefix = config.PREFIX;
         if (!text.startsWith(prefix)) return;
 
@@ -458,30 +461,35 @@ async function handleMessage(sock, msg) {
         const cmdRaw = parts[0].toLowerCase();
         const args = parts.slice(1);
 
+        // ─── Find plugin ───
         let plugin = plugins.get(cmdRaw);
         if (!plugin && aliases.has(cmdRaw)) {
             plugin = plugins.get(aliases.get(cmdRaw));
         }
         if (!plugin) return;
 
+        // ─── Owner check ───
         if (plugin.ownerOnly && !isOwner) {
             return sock.sendMessage(from, {
-                text: `${TOP}\n   ❌ *ACCESS DENIED*\n${MID}\n   👑 Owner only command\n${BOT}`
+                text: `${TOP}\n   ❌ *ACCESS DENIED*\n${MID}\n   👑 Owner only\n${BOT}`
             }, { quoted: msg });
         }
 
+        // ─── Group-only check ───
         if (plugin.groupOnly && !isGroup) {
             return sock.sendMessage(from, {
                 text: `${TOP}\n   ❌ *GROUP ONLY*\n${MID}\n   👥 Use in a group\n${BOT}`
             }, { quoted: msg });
         }
 
+        // ─── Private-only check ───
         if (plugin.privateOnly && isGroup) {
             return sock.sendMessage(from, {
                 text: `${TOP}\n   ❌ *PRIVATE ONLY*\n${MID}\n   💬 Use in DM\n${BOT}`
             }, { quoted: msg });
         }
 
+        // ─── Admin check ───
         if (plugin.adminOnly && isGroup && !isOwner) {
             try {
                 const meta = await sock.groupMetadata(from);
@@ -491,36 +499,44 @@ async function handleMessage(sock, msg) {
                 );
                 if (!isAdmin) {
                     return sock.sendMessage(from, {
-                        text: `${TOP}\n   ❌ *ADMIN ONLY*\n${MID}\n   🛡️ Group admins only\n${BOT}`
+                        text: `${TOP}\n   ❌ *ADMIN ONLY*\n${MID}\n   🛡️ Admins only\n${BOT}`
                     }, { quoted: msg });
                 }
             } catch {}
         }
 
+        // ─── Cooldown ───
         const cooldownMs = plugin.cooldown ?? config.cmdCooldown ?? 3000;
         if (cooldownMs > 0 && !isOwner) {
-            const wait = isOnCooldown(sender, plugin.name, cooldownMs);
+            const wait = isOnCooldown(`${sessionNumber}:${sender}`, plugin.name, cooldownMs);
             if (wait > 0) {
                 return sock.sendMessage(from, {
-                    text: `${TOP}\n   ⏳ *SLOW DOWN*\n${MID}\n   Wait *${wait}s* before .${plugin.name}\n${BOT}`
+                    text: `${TOP}\n   ⏳ *SLOW DOWN*\n${MID}\n   Wait *${wait}s*\n${BOT}`
                 }, { quoted: msg });
             }
         }
 
-        fancyLog('COMMAND', `.${plugin.name} ${args.join(' ')} — ${sender}`);
+        // ─── Log ───
+        fancyLog('COMMAND', `[${sessionNumber}] .${plugin.name} — ${sender}`);
 
+        // ─── Auto read ───
         if (config.autoRead) {
             try { await sock.readMessages([msg.key]); } catch {}
         }
 
+        // ─── Auto typing ───
         if (config.autoTyping && !isGroup) {
             try { await sock.sendPresenceUpdate('composing', from); } catch {}
         }
 
+        // ─── Context ───
         const ctx = {
             sock, msg, from, sender, isGroup, isOwner,
             args, text, command: plugin.name, prefix,
             config, helper, plugins,
+
+            sessionNumber,   // ← NEW: current session number
+            botNumber: sock.user?.id?.split(':')[0],
 
             media: getMediaType(msg),
             hasMedia: Boolean(getMediaType(msg)),
@@ -535,37 +551,39 @@ async function handleMessage(sock, msg) {
             saveSettings,
         };
 
+        // ─── Run plugin ───
         try {
             await plugin.run(ctx);
         } catch (err) {
-            fancyLog('ERROR', `[${plugin.name}] ${err.message}`);
+            fancyLog('ERROR', `[${sessionNumber}] [${plugin.name}] ${err.message}`);
             await sock.sendMessage(from, {
                 text: `${TOP}\n   ❌ *COMMAND ERROR*\n${MID}\n   ${err.message.slice(0, 200)}\n${BOT}`
             }, { quoted: msg });
         }
 
     } catch (err) {
-        fancyLog('ERROR', `handleMessage: ${err.message}`);
+        fancyLog('ERROR', `[${sessionNumber}] handleMessage: ${err.message}`);
     }
 }
 
 // ===============================================
-//  ⚙️ EVENT SETUP
+//  ⚙️ EVENT SETUP (Per Session)
+//  ✅ NEW 2nd parameter: sessionNumber
 // ===============================================
-function setupEvents(sock) {
+function setupEvents(sock, sessionNumber = 'unknown') {
     sock.ev.on('group-participants.update', (update) => {
-        handleGroupParticipants(sock, update);
+        handleGroupParticipants(sock, update, sessionNumber);
     });
 
     sock.ev.on('messages.reaction', (reactions) => {
-        handleReaction(sock, reactions);
+        handleReaction(sock, reactions, sessionNumber);
     });
 
     sock.ev.on('messages.update', (updates) => {
-        handleAntidelete(sock, updates);
+        handleAntidelete(sock, updates, sessionNumber);
     });
 
-    fancyLog('INFO', '✅ Events registered (welcome/goodbye/antidelete/reactions)');
+    fancyLog('INFO', `[${sessionNumber}] ✅ Events registered`);
 }
 
 // ===============================================
@@ -577,13 +595,18 @@ module.exports = {
     setupEvents,
     plugins,
     aliases,
+
+    // Helpers for external use
     containsLink,
-    isGroupLink,
     getMediaType,
     downloadQuotedMedia,
-    handleGroupParticipants,
     handleAntidelete,
+    handleGroupParticipants,
     handleReaction,
     cacheMessage,
     getCachedMessage,
+    clearSessionCache,
+
+    // Session cache for stats
+    SESSION_CACHE,
 };
