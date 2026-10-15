@@ -1,0 +1,33 @@
+# Backend files (Vercel ko zaroorat nahi)
+index.js
+server.js
+pair.js
+config.js
+handlers/
+plugins/
+utils/
+sessions/
+assets/
+
+# Session and env
+.env
+.env.*
+session/
+
+# Node modules
+node_modules/
+
+# Docs
+README.md
+Dockerfile
+docker-compose.yml
+app.json
+Procfile
+render.yaml
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
