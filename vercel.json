@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "framework": null,
   "installCommand": "echo 'Skipping npm install — static frontend only'",
   "buildCommand": "echo 'Skipping build — static files only'",
   "outputDirectory": "public",
