@@ -53,13 +53,11 @@ app.post('/api/pair', async (req, res) => {
     try {
         const { createPairingCode, activeSessions } = require('./index');
 
-        // Check session limit
         const isNewUser = !sessionManager.userExists(cleanNumber);
         if (isNewUser && !sessionManager.canAddUser()) {
             return res.status(429).json({ success: false, error: `Server is full (max ${sessionManager.MAX_USERS} users).` });
         }
 
-        // Check if already connected
         const existing = activeSessions.get(cleanNumber);
         if (existing && existing.state === 'connected') {
             return res.status(400).json({ success: false, error: 'This number is already connected.' });
@@ -239,11 +237,11 @@ app.use((err, req, res, next) => {
 });
 
 // ===============================================
-//  ▶️ START SERVER — Pxxl compatible (Force Port 3000)
+//  ▶️ START SERVER — Pxxl compatible (Use process.env.PORT)
 // ===============================================
 function startServer() {
-    // Pxxl public route explicitly port 3000 par map hota hai
-    const port = 3000;
+    // Pxxl dynamically assigns a port via process.env.PORT
+    const port = process.env.PORT || 3000;
 
     const server = app.listen(port, '0.0.0.0', () => {
         fancyLog('SUCCESS', `🌐 Pairing website running on port ${port}`);
