@@ -76,9 +76,11 @@ async function startBotForUser(number) {
         throw new Error(`Maximum ${sessionManager.MAX_USERS} users allowed`);
     }
 
+    // Clear any previous session files to ensure fresh pairing
     const sessionPath = sessionManager.createSession(cleanNumber);
+    
     const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
-    const { version, isLatest } = await fetchLatestBaileysVersion();
+    const { version } = await fetchLatestBaileysVersion();
 
     const sessionData = {
         number: cleanNumber,
@@ -89,6 +91,7 @@ async function startBotForUser(number) {
         pairingRequestPromise: null,
         reconnectAttempts: 0,
         startedAt: Date.now(),
+        isReadyForPairing: false, // ✅ NEW: Flag for pairing readiness
     };
 
     const sock = makeWASocket({
@@ -126,11 +129,13 @@ async function startBotForUser(number) {
 
         if (qr) {
             sessionData.state = 'pairing';
-            fancyLog('PAIRING', `[${cleanNumber}] QR received — pairing ready`);
+            sessionData.isReadyForPairing = true; // ✅ Set ready flag
+            fancyLog('PAIRING', `[${cleanNumber}] QR received — ready for pairing code`);
         }
 
         if (connection === 'close') {
             sessionData.state = 'disconnected';
+            sessionData.isReadyForPairing = false;
             sessionData.pairingCode = null;
             sessionData.pairingRequestPromise = null;
 
@@ -145,10 +150,9 @@ async function startBotForUser(number) {
                     fancyLog('ERROR', `[${cleanNumber}] Session reset failed: ${err.message}`);
                 }
                 activeSessions.delete(cleanNumber);
-                sessionData.reconnectAttempts = 0;
             } else {
                 sessionData.reconnectAttempts++;
-                fancyLog('INFO', `[${cleanNumber}] Reconnecting in 5s... (attempt ${sessionData.reconnectAttempts})`);
+                fancyLog('INFO', `[${cleanNumber}] Reconnecting in 5s...`);
                 activeSessions.delete(cleanNumber);
                 setTimeout(() => {
                     startBotForUser(cleanNumber).catch(err => {
@@ -160,7 +164,7 @@ async function startBotForUser(number) {
 
         else if (connection === 'open') {
             sessionData.state = 'connected';
-            sessionData.reconnectAttempts = 0;
+            sessionData.isReadyForPairing = false;
             sessionData.pairingCode = null;
             sessionData.pairingRequestPromise = null;
 
@@ -168,40 +172,8 @@ async function startBotForUser(number) {
 
             try {
                 const ownerJid = `${cleanNumber}@s.whatsapp.net`;
-                const uptimeSec = Math.floor((Date.now() - startedAt) / 1000);
-
-                const welcomeCaption =
-`💚 *${global.BOT_NAME}* is now online!
-
-━━━━━━━━━━━━━━━━━━
-
-👋 *Welcome back!*
-
-Your WhatsApp bot is successfully connected and ready to serve.
-
-━━━━━━━━━━━━━━━━━━
-
-📋 *Bot Information*
-
-• 🤖 *Bot Name* : ${global.BOT_NAME}
-• 🧠 *Version*  : ${global.VERSION}
-• 📱 *Number*   : +${cleanNumber}
-• 🌐 *Prefix*   : ${global.PREFIX}
-• ⏱️ *Uptime*   : ${uptimeSec}s
-
-━━━━━━━━━━━━━━━━━━
-
-⚡ *Quick Start*
-
-• Type *${global.PREFIX}menu* to see all commands
-
-━━━━━━━━━━━━━━━━━━
-
-> 💚 *Powered by Arslan Tech's*
-> 🎀 *Made with love for Saba*`;
-
+                const welcomeCaption = `💚 *${global.BOT_NAME}* is now online!`;
                 await helper.sendWithLogo(sock, ownerJid, welcomeCaption);
-                fancyLog('SUCCESS', `[${cleanNumber}] Welcome message sent.`);
             } catch (err) {
                 fancyLog('WARN', `[${cleanNumber}] Welcome msg failed: ${err.message}`);
             }
@@ -221,37 +193,11 @@ Your WhatsApp bot is successfully connected and ready to serve.
         }
     });
 
-    // ===============================================
-    //  ☎️ ANTI-CALL
-    // ===============================================
-    if (config.ANTI_CALL) {
-        sock.ev.on('CB:call', async (json) => {
-            try {
-                const callId   = json.content[0].attrs['call-id'];
-                const callerId = json.content[0].attrs['from'];
-
-                await sock.rejectCall(callId, callerId);
-                fancyLog('ANTICALL', `[${cleanNumber}] Rejected call from ${callerId}`);
-
-                await sock.sendMessage(callerId, {
-                    text: `📵 *${global.BOT_NAME}*\n\nSorry, calls are disabled.\nPlease send a message instead. 💚`
-                });
-
-                if (config.AUTO_BLOCK_CALL) {
-                    await sock.updateBlockStatus(callerId, 'block');
-                    fancyLog('BLOCK', `[${cleanNumber}] Blocked caller ${callerId}`);
-                }
-            } catch (err) {
-                fancyLog('ERROR', `[${cleanNumber}] Anti-call: ${err.message}`);
-            }
-        });
-    }
-
     return sessionData;
 }
 
 // ===============================================
-//  🔑 CREATE PAIRING CODE
+//  🔑 CREATE PAIRING CODE (Wait for QR)
 // ===============================================
 async function createPairingCode(number) {
     const cleanNumber = sessionManager.cleanNumber(number);
@@ -268,6 +214,18 @@ async function createPairingCode(number) {
         sessionData = await startBotForUser(cleanNumber);
     }
 
+    // ✅ FIX: Wait until the socket is ready for pairing (QR event received)
+    // Agar ready nahi hai, toh 10 second tak wait karo
+    let waited = 0;
+    while (!sessionData.isReadyForPairing && waited < 10000) {
+        await new Promise(r => setTimeout(r, 500));
+        waited += 500;
+    }
+
+    if (!sessionData.isReadyForPairing) {
+        throw new Error('WhatsApp connection timed out. Please try again.');
+    }
+
     const now = Date.now();
     if (sessionData.pairingCode && now - sessionData.pairingRequestedAt < 45000) {
         return sessionData.pairingCode;
@@ -281,15 +239,7 @@ async function createPairingCode(number) {
     sessionData.pairingRequestPromise = (async () => {
         const code = await requestPairingCode(sessionData.sock, cleanNumber);
         if (!code) throw new Error('WhatsApp did not return a pairing code.');
-
         sessionData.pairingCode = code;
-
-        setTimeout(() => {
-            if (Date.now() - sessionData.pairingRequestedAt >= 45000) {
-                sessionData.pairingCode = null;
-            }
-        }, 45000);
-
         return code;
     })().finally(() => {
         sessionData.pairingRequestPromise = null;
@@ -308,20 +258,15 @@ function getBotStatus() {
             number,
             state: data.state,
             connected: data.state === 'connected',
-            uptime: Math.floor((Date.now() - data.startedAt) / 1000),
         });
     }
-
     return {
         name: global.BOT_NAME,
         version: global.VERSION,
         totalSessions: activeSessions.size,
         maxSessions: sessionManager.MAX_USERS,
-        availableSlots: sessionManager.MAX_USERS - activeSessions.size,
         sessions,
         uptimeSeconds: Math.floor((Date.now() - startedAt) / 1000),
-        nodeVersion: process.versions.node,
-        memory: Math.round(process.memoryUsage().rss / 1024 / 1024) + ' MB',
     };
 }
 
@@ -334,42 +279,28 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (err) => {
     fancyLog('ERROR', `[unhandledRejection] ${err?.message || err}`);
 });
-process.on('SIGINT', () => {
-    fancyLog('WARN', '🛑 Shutting down Saba MD...');
-    process.exit(0);
-});
 
 // ===============================================
 //  ▶️ BOOT — Server + Auto-Restore Sessions
 // ===============================================
 if (require.main === module) {
-    // 1. Start web server (with crash protection)
     if (!serverStarted) {
-        try {
-            startServer();
-            serverStarted = true;
-        } catch (e) {
-            fancyLog('ERROR', `Server failed to start: ${e.message}`);
-        }
+        startServer();
+        serverStarted = true;
     }
 
-    // 2. Auto-restore existing sessions
-    try {
-        const existingUsers = sessionManager.listUsers();
-        if (existingUsers.length > 0) {
-            fancyLog('INFO', `Restoring ${existingUsers.length} session(s)...`);
-            existingUsers.forEach((num, i) => {
-                setTimeout(() => {
-                    startBotForUser(num).catch(err => {
-                        fancyLog('ERROR', `[${num}] Restore failed: ${err.message}`);
-                    });
-                }, i * 2000);  // 2 second delay between each
-            });
-        } else {
-            fancyLog('INFO', 'No existing sessions. Waiting for pairing...');
-        }
-    } catch (e) {
-        fancyLog('ERROR', `Session restore error: ${e.message}`);
+    const existingUsers = sessionManager.listUsers();
+    if (existingUsers.length > 0) {
+        fancyLog('INFO', `Restoring ${existingUsers.length} session(s)...`);
+        existingUsers.forEach((num, i) => {
+            setTimeout(() => {
+                startBotForUser(num).catch(err => {
+                    fancyLog('ERROR', `[${num}] Restore failed: ${err.message}`);
+                });
+            }, i * 2000);
+        });
+    } else {
+        fancyLog('INFO', 'No existing sessions. Waiting for pairing...');
     }
 }
 
