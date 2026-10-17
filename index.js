@@ -343,25 +343,33 @@ process.on('SIGINT', () => {
 //  ▶️ BOOT — Server + Auto-Restore Sessions
 // ===============================================
 if (require.main === module) {
-    // 1. Start web server
+    // 1. Start web server (with crash protection)
     if (!serverStarted) {
-        startServer();
-        serverStarted = true;
+        try {
+            startServer();
+            serverStarted = true;
+        } catch (e) {
+            fancyLog('ERROR', `Server failed to start: ${e.message}`);
+        }
     }
 
     // 2. Auto-restore existing sessions
-    const existingUsers = sessionManager.listUsers();
-    if (existingUsers.length > 0) {
-        fancyLog('INFO', `Restoring ${existingUsers.length} session(s)...`);
-        existingUsers.forEach((num, i) => {
-            setTimeout(() => {
-                startBotForUser(num).catch(err => {
-                    fancyLog('ERROR', `[${num}] Restore failed: ${err.message}`);
-                });
-            }, i * 2000);  // 2 second delay between each
-        });
-    } else {
-        fancyLog('INFO', 'No existing sessions. Waiting for pairing...');
+    try {
+        const existingUsers = sessionManager.listUsers();
+        if (existingUsers.length > 0) {
+            fancyLog('INFO', `Restoring ${existingUsers.length} session(s)...`);
+            existingUsers.forEach((num, i) => {
+                setTimeout(() => {
+                    startBotForUser(num).catch(err => {
+                        fancyLog('ERROR', `[${num}] Restore failed: ${err.message}`);
+                    });
+                }, i * 2000);  // 2 second delay between each
+            });
+        } else {
+            fancyLog('INFO', 'No existing sessions. Waiting for pairing...');
+        }
+    } catch (e) {
+        fancyLog('ERROR', `Session restore error: ${e.message}`);
     }
 }
 
