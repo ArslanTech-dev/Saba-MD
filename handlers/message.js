@@ -28,7 +28,6 @@ const BOT  = '─❍══ ⃟ ⃟ ╟ ══⊷❍';
 
 // ===============================================
 //  💾 MESSAGE CACHE — PER SESSION
-//  Format: Map<sessionNumber, Map<msgId, cacheEntry>>
 // ===============================================
 const SESSION_CACHE = new Map();
 const CACHE_TTL = 60 * 60 * 1000;   // 1 hour
@@ -54,7 +53,6 @@ function cacheMessage(sessionNumber, msg) {
             timestamp: Date.now(),
         });
 
-        // Cleanup old entries
         if (cache.size > CACHE_MAX) {
             const now = Date.now();
             for (const [k, v] of cache) {
@@ -83,7 +81,7 @@ function clearSessionCache(sessionNumber) {
 }
 
 // ===============================================
-//  🔄 LOAD ALL PLUGINS (only once)
+//  🔄 LOAD ALL PLUGINS
 // ===============================================
 function loadPlugins() {
     const pluginDir = path.join(__dirname, '..', 'plugins');
@@ -333,7 +331,6 @@ ${MID}
                 fancyLog('ERROR', `[${sessionNumber}] Antidelete send: ${err.message}`);
             }
 
-            // Cleanup
             const cache = SESSION_CACHE.get(sessionNumber);
             if (cache) cache.delete(msgId);
         }
@@ -352,7 +349,6 @@ async function handleGroupParticipants(sock, update, sessionNumber) {
 
         const settings = getSettings(id);
 
-        // ─── Welcome ───
         if (action === 'add' && settings.welcome) {
             try {
                 const meta = await sock.groupMetadata(id);
@@ -378,7 +374,6 @@ ${BOT}`;
             }
         }
 
-        // ─── Goodbye ───
         if (action === 'remove' && settings.goodbye) {
             try {
                 const meta = await sock.groupMetadata(id);
@@ -424,12 +419,10 @@ async function handleReaction(sock, reactions, sessionNumber) {
 
 // ===============================================
 //  📩 MAIN MESSAGE HANDLER (Multi-Session)
-//  ✅ NEW 3rd parameter: sessionNumber
 // ===============================================
 async function handleMessage(sock, msg, sessionNumber = 'unknown') {
     try {
         if (!msg.message) return;
-        if (msg.key.fromMe) return;
 
         const from    = msg.key.remoteJid;
         const isGroup = helper.isGroup(from);
@@ -437,10 +430,16 @@ async function handleMessage(sock, msg, sessionNumber = 'unknown') {
         const text    = helper.getText(msg);
         const isOwner = helper.isOwner(sender);
 
-        if (from === 'status@broadcast') return;
-
         // ─── CACHE (for antidelete) ───
         cacheMessage(sessionNumber, msg);
+
+        // ✅ FIX: Bot apne hi messages ko ignore kare, LEKIN agar wo command ho toh process kare
+        if (msg.key.fromMe) {
+            // Agar text nahi hai ya prefix se shuru nahi hota, toh return kar do (taaki bot apne hi replies ko reply na kare)
+            if (!text || !text.startsWith(config.PREFIX)) return;
+        }
+
+        if (from === 'status@broadcast') return;
 
         // ─── ANTILINK ───
         if (isGroup && text && !isOwner) {
@@ -535,7 +534,7 @@ async function handleMessage(sock, msg, sessionNumber = 'unknown') {
             args, text, command: plugin.name, prefix,
             config, helper, plugins,
 
-            sessionNumber,   // ← NEW: current session number
+            sessionNumber,
             botNumber: sock.user?.id?.split(':')[0],
 
             media: getMediaType(msg),
@@ -568,7 +567,6 @@ async function handleMessage(sock, msg, sessionNumber = 'unknown') {
 
 // ===============================================
 //  ⚙️ EVENT SETUP (Per Session)
-//  ✅ NEW 2nd parameter: sessionNumber
 // ===============================================
 function setupEvents(sock, sessionNumber = 'unknown') {
     sock.ev.on('group-participants.update', (update) => {
@@ -595,8 +593,6 @@ module.exports = {
     setupEvents,
     plugins,
     aliases,
-
-    // Helpers for external use
     containsLink,
     getMediaType,
     downloadQuotedMedia,
@@ -606,7 +602,5 @@ module.exports = {
     cacheMessage,
     getCachedMessage,
     clearSessionCache,
-
-    // Session cache for stats
     SESSION_CACHE,
 };
