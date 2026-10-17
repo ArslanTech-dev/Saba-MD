@@ -17,6 +17,7 @@ const {
 const pino    = require('pino');
 const chalk   = require('chalk');
 const fs      = require('fs');
+const path    = require('path');
 const config  = require('./config');
 const { startServer } = require('./server');
 const { handleMessage, loadPlugins, setupEvents } = require('./handlers/message');
@@ -34,7 +35,6 @@ global.OWNER_NAME = config.OWNER_NAME;
 global.VERSION    = '2.0.0';
 
 // ===== ACTIVE SESSIONS MAP =====
-// Format: Map<number, { sock, state, pairingCode, ... }>
 const activeSessions = new Map();
 
 // ===== SHARED STATE =====
@@ -65,32 +65,21 @@ console.log(chalk.hex('#25D366').bold(`
 async function startBotForUser(number) {
     const cleanNumber = sessionManager.cleanNumber(number);
 
-    // ─── Validate ───
-    if (!sessionManager.isValidNumber(cleanNumber)) {
-        throw new Error('Invalid phone number');
-    }
+    if (!sessionManager.isValidNumber(cleanNumber)) throw new Error('Invalid phone number');
 
-    // ─── Already running? ───
     if (activeSessions.has(cleanNumber)) {
         fancyLog('INFO', `Session already active for ${cleanNumber}`);
         return activeSessions.get(cleanNumber);
     }
 
-    // ─── Check limit ───
     if (!sessionManager.canAddUser() && !sessionManager.userExists(cleanNumber)) {
         throw new Error(`Maximum ${sessionManager.MAX_USERS} users allowed`);
     }
 
-    // ─── Get session path ───
     const sessionPath = sessionManager.createSession(cleanNumber);
-
-    // ─── Load auth state ───
     const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
-
-    // ─── Get Baileys version ───
     const { version, isLatest } = await fetchLatestBaileysVersion();
 
-    // ─── Session state object ───
     const sessionData = {
         number: cleanNumber,
         sock: null,
@@ -102,7 +91,6 @@ async function startBotForUser(number) {
         startedAt: Date.now(),
     };
 
-    // ─── Create socket ───
     const sock = makeWASocket({
         version,
         logger: pino({ level: 'fatal' }),
@@ -122,13 +110,9 @@ async function startBotForUser(number) {
     sessionData.sock = sock;
     activeSessions.set(cleanNumber, sessionData);
 
-    // ─── Save creds ───
     sock.ev.on('creds.update', saveCreds);
-
-    // ─── Setup events for this session ───
     setupEvents(sock, cleanNumber);
 
-    // ─── Load plugins (only once) ───
     if (!pluginsLoaded) {
         loadPlugins();
         pluginsLoaded = true;
@@ -140,13 +124,11 @@ async function startBotForUser(number) {
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
 
-        // ─── QR / Pairing ready ───
         if (qr) {
             sessionData.state = 'pairing';
             fancyLog('PAIRING', `[${cleanNumber}] QR received — pairing ready`);
         }
 
-        // ─── Connection CLOSE ───
         if (connection === 'close') {
             sessionData.state = 'disconnected';
             sessionData.pairingCode = null;
@@ -156,18 +138,15 @@ async function startBotForUser(number) {
             fancyLog('ERROR', `[${cleanNumber}] Connection closed. Reason: ${reason}`);
 
             if (reason === DisconnectReason.loggedOut) {
-                // Clear session on logout
                 try {
                     fs.rmSync(sessionPath, { recursive: true, force: true });
                     fancyLog('WARN', `[${cleanNumber}] Session cleared (logged out)`);
                 } catch (err) {
                     fancyLog('ERROR', `[${cleanNumber}] Session reset failed: ${err.message}`);
                 }
-
                 activeSessions.delete(cleanNumber);
                 sessionData.reconnectAttempts = 0;
             } else {
-                // Reconnect
                 sessionData.reconnectAttempts++;
                 fancyLog('INFO', `[${cleanNumber}] Reconnecting in 5s... (attempt ${sessionData.reconnectAttempts})`);
                 activeSessions.delete(cleanNumber);
@@ -179,7 +158,6 @@ async function startBotForUser(number) {
             }
         }
 
-        // ─── Connection OPEN ───
         else if (connection === 'open') {
             sessionData.state = 'connected';
             sessionData.reconnectAttempts = 0;
@@ -188,7 +166,6 @@ async function startBotForUser(number) {
 
             fancyLog('SUCCESS', `💚 [${cleanNumber}] Connected!`);
 
-            // ─── Welcome Message ───
             try {
                 const ownerJid = `${cleanNumber}@s.whatsapp.net`;
                 const uptimeSec = Math.floor((Date.now() - startedAt) / 1000);
@@ -200,7 +177,7 @@ async function startBotForUser(number) {
 
 👋 *Welcome back!*
 
-Your WhatsApp bot is successfully connected and ready to serve. All systems are running smoothly.
+Your WhatsApp bot is successfully connected and ready to serve.
 
 ━━━━━━━━━━━━━━━━━━
 
@@ -217,7 +194,6 @@ Your WhatsApp bot is successfully connected and ready to serve. All systems are 
 ⚡ *Quick Start*
 
 • Type *${global.PREFIX}menu* to see all commands
-• Type *${global.PREFIX}ping* to test the bot
 
 ━━━━━━━━━━━━━━━━━━
 
@@ -275,39 +251,32 @@ Your WhatsApp bot is successfully connected and ready to serve. All systems are 
 }
 
 // ===============================================
-//  🔑 CREATE PAIRING CODE (for specific user)
+//  🔑 CREATE PAIRING CODE
 // ===============================================
 async function createPairingCode(number) {
     const cleanNumber = sessionManager.cleanNumber(number);
 
-    if (!sessionManager.isValidNumber(cleanNumber)) {
-        throw new Error('Invalid phone number');
-    }
+    if (!sessionManager.isValidNumber(cleanNumber)) throw new Error('Invalid phone number');
 
-    // ─── Check if already connected ───
     const existing = activeSessions.get(cleanNumber);
     if (existing && existing.state === 'connected') {
         throw new Error('This number is already connected');
     }
 
-    // ─── Start bot for user (if not active) ───
     let sessionData = existing;
     if (!sessionData) {
         sessionData = await startBotForUser(cleanNumber);
     }
 
-    // ─── Check pairing cache ───
     const now = Date.now();
     if (sessionData.pairingCode && now - sessionData.pairingRequestedAt < 45000) {
         return sessionData.pairingCode;
     }
 
-    // ─── In-flight request? ───
     if (sessionData.pairingRequestPromise) {
         return sessionData.pairingRequestPromise;
     }
 
-    // ─── Request new code ───
     sessionData.pairingRequestedAt = now;
     sessionData.pairingRequestPromise = (async () => {
         const code = await requestPairingCode(sessionData.sock, cleanNumber);
