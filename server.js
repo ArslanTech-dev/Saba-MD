@@ -1,7 +1,7 @@
 // ===============================================
-//  💚 SABA MD — EXPRESS SERVER (Multi-User)
+//  💚 SABA MD — Express Server (Multi-User)
 //  👨‍💻 Made by Arslan Tech's for Saba
-//  🎯 Multi-session API endpoints
+//  🎯 Multi-session API endpoints & Web Server
 // ===============================================
 
 const express = require('express');
@@ -36,50 +36,35 @@ app.get('/', (req, res) => {
 
 // ===============================================
 //  🔑 POST /api/pair — Generate Pairing Code
-//  Body: { number: "923001234567" }
 // ===============================================
 app.post('/api/pair', async (req, res) => {
     const { number } = req.body || {};
 
-    // ─── Validation ───
     if (!number) {
-        return res.status(400).json({
-            success: false,
-            error: 'Phone number is required.',
-        });
+        return res.status(400).json({ success: false, error: 'Phone number is required.' });
     }
 
     const cleanNumber = String(number).replace(/\D/g, '');
 
     if (cleanNumber.length < 10 || cleanNumber.length > 15) {
-        return res.status(400).json({
-            success: false,
-            error: 'Invalid number. Include country code (e.g. 923001234567).',
-        });
+        return res.status(400).json({ success: false, error: 'Invalid number. Include country code (e.g. 923001234567).' });
     }
 
     try {
         const { createPairingCode, activeSessions } = require('./index');
 
-        // ─── Check session limit ───
+        // Check session limit
         const isNewUser = !sessionManager.userExists(cleanNumber);
         if (isNewUser && !sessionManager.canAddUser()) {
-            return res.status(429).json({
-                success: false,
-                error: `Server is full (max ${sessionManager.MAX_USERS} users). Try again later.`,
-            });
+            return res.status(429).json({ success: false, error: `Server is full (max ${sessionManager.MAX_USERS} users).` });
         }
 
-        // ─── Check if already connected ───
+        // Check if already connected
         const existing = activeSessions.get(cleanNumber);
         if (existing && existing.state === 'connected') {
-            return res.status(400).json({
-                success: false,
-                error: 'This number is already connected.',
-            });
+            return res.status(400).json({ success: false, error: 'This number is already connected.' });
         }
 
-        // ─── Generate code ───
         fancyLog('PAIRING', `Code requested for ${cleanNumber}`);
         const code = await createPairingCode(cleanNumber);
 
@@ -88,24 +73,15 @@ app.post('/api/pair', async (req, res) => {
             code,
             number: cleanNumber,
             expiresIn: 45,
-            message: 'Enter this code in WhatsApp → Linked Devices.',
+            message: 'Enter this code in WhatsApp → Linked Devices.'
         });
 
     } catch (err) {
         fancyLog('ERROR', `Pair API: ${err.message}`);
-
         if (err.code === 'PAIRING_BUSY') {
-            return res.status(429).json({
-                success: false,
-                error: err.message,
-                retryAfter: 45,
-            });
+            return res.status(429).json({ success: false, error: err.message, retryAfter: 45 });
         }
-
-        return res.status(500).json({
-            success: false,
-            error: err.message || 'Pairing failed. Try again.',
-        });
+        return res.status(500).json({ success: false, error: err.message || 'Pairing failed.' });
     }
 });
 
@@ -166,40 +142,29 @@ app.get('/api/sessions', (req, res) => {
 
 // ===============================================
 //  🗑️ POST /api/unpair — Disconnect a Session
-//  Body: { number: "923001234567" }
 // ===============================================
 app.post('/api/unpair', async (req, res) => {
     const { number } = req.body || {};
-
-    if (!number) {
-        return res.status(400).json({ success: false, error: 'Number required' });
-    }
+    if (!number) return res.status(400).json({ success: false, error: 'Number required' });
 
     const cleanNumber = String(number).replace(/\D/g, '');
 
     try {
         const { activeSessions } = require('./index');
-
-        // Logout socket
         const session = activeSessions.get(cleanNumber);
         if (session && session.sock) {
             try { await session.sock.logout(); } catch {}
             try { await session.sock.end(); } catch {}
         }
 
-        // Remove from active
         activeSessions.delete(cleanNumber);
-
-        // Delete session files
         sessionManager.deleteSession(cleanNumber);
 
-        // Clear cache
         const { clearSessionCache } = require('./handlers/message');
         if (clearSessionCache) clearSessionCache(cleanNumber);
 
         fancyLog('SUCCESS', `Unpaired ${cleanNumber}`);
         res.json({ success: true, message: `Session ${cleanNumber} removed.` });
-
     } catch (err) {
         fancyLog('ERROR', `Unpair: ${err.message}`);
         res.status(500).json({ success: false, error: err.message });
@@ -213,7 +178,6 @@ app.get('/health', (req, res) => {
     try {
         const { getBotStatus } = require('./index');
         const s = getBotStatus();
-
         res.json({
             status: 'ok',
             bot: s.name,
@@ -250,10 +214,7 @@ app.get('/api/config', (req, res) => {
 app.get('/api/stats', (req, res) => {
     try {
         const stats = sessionManager.getFormattedStats();
-        res.json({
-            success: true,
-            ...stats,
-        });
+        res.json({ success: true, ...stats });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
@@ -278,18 +239,19 @@ app.use((err, req, res, next) => {
 });
 
 // ===============================================
-//  ▶️ START SERVER — Cloud-compatible
+//  ▶️ START SERVER — Pxxl / Cloud compatible
 // ===============================================
 function startServer() {
     const port = process.env.PORT || 3000;
 
+    // 0.0.0.0 bind karna zaroori hai taaki Pxxl isko access kar sake
     const server = app.listen(port, '0.0.0.0', () => {
-        fancyLog('SUCCESS', `🌐 Pairing website: http://localhost:${port}`);
-        fancyLog('INFO',    `🔗 Pair API:        http://localhost:${port}/api/pair`);
-        fancyLog('INFO',    `📊 Status:          http://localhost:${port}/api/status`);
-        fancyLog('INFO',    `📋 Sessions:        http://localhost:${port}/api/sessions`);
-        fancyLog('INFO',    `❤️  Health:          http://localhost:${port}/health`);
-        fancyLog('INFO',    `👥 Max Users:       ${sessionManager.MAX_USERS}`);
+        fancyLog('SUCCESS', `🌐 Pairing website running on port ${port}`);
+        fancyLog('INFO',    `🔗 Pair API:  /api/pair`);
+        fancyLog('INFO',    `📊 Status:    /api/status`);
+        fancyLog('INFO',    `📋 Sessions:  /api/sessions`);
+        fancyLog('INFO',    `❤️  Health:    /health`);
+        fancyLog('INFO',    `👥 Max Users: ${sessionManager.MAX_USERS}`);
     });
 
     server.on('error', (err) => {
