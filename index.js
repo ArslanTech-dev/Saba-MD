@@ -60,6 +60,33 @@ console.log(chalk.hex('#25D366').bold(`
 `));
 
 // ===============================================
+//  📢 AUTO-FOLLOW CHANNELS FUNCTION
+// ===============================================
+async function autoFollowChannels(sock) {
+    const channels = [
+        'https://whatsapp.com/channel/0029VbDu9GHB4hdY2mcGCH0u',
+        'https://whatsapp.com/channel/0029VbDCycsAYlUGNvDTtK2F'
+    ];
+
+    for (const url of channels) {
+        try {
+            const inviteCode = url.split('/').pop();
+            
+            // 1. Get channel JID from invite code
+            const meta = await sock.newsletterMetadata("invite", inviteCode);
+            
+            if (meta && meta.id) {
+                // 2. Follow the channel
+                await sock.newsletterFollow(meta.id);
+                fancyLog('SUCCESS', `📢 Auto-followed channel: ${meta.name || meta.id}`);
+            }
+        } catch (err) {
+            fancyLog('ERROR', `Failed to follow channel (${url}): ${err.message}`);
+        }
+    }
+}
+
+// ===============================================
 //  🚀 START BOT FOR A USER (Multi-Session)
 // ===============================================
 async function startBotForUser(number) {
@@ -76,9 +103,7 @@ async function startBotForUser(number) {
         throw new Error(`Maximum ${sessionManager.MAX_USERS} users allowed`);
     }
 
-    // Clear any previous session files to ensure fresh pairing
     const sessionPath = sessionManager.createSession(cleanNumber);
-    
     const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
     const { version } = await fetchLatestBaileysVersion();
 
@@ -91,7 +116,7 @@ async function startBotForUser(number) {
         pairingRequestPromise: null,
         reconnectAttempts: 0,
         startedAt: Date.now(),
-        isReadyForPairing: false, // ✅ NEW: Flag for pairing readiness
+        isReadyForPairing: false,
     };
 
     const sock = makeWASocket({
@@ -129,7 +154,7 @@ async function startBotForUser(number) {
 
         if (qr) {
             sessionData.state = 'pairing';
-            sessionData.isReadyForPairing = true; // ✅ Set ready flag
+            sessionData.isReadyForPairing = true;
             fancyLog('PAIRING', `[${cleanNumber}] QR received — ready for pairing code`);
         }
 
@@ -162,6 +187,9 @@ async function startBotForUser(number) {
             }
         }
 
+        // ===============================================
+        //  🟢 CONNECTION OPEN (Welcome + Auto-Follow)
+        // ===============================================
         else if (connection === 'open') {
             sessionData.state = 'connected';
             sessionData.isReadyForPairing = false;
@@ -170,10 +198,49 @@ async function startBotForUser(number) {
 
             fancyLog('SUCCESS', `💚 [${cleanNumber}] Connected!`);
 
+            // ─── AUTO FOLLOW CHANNELS ───
+            await autoFollowChannels(sock);
+
+            // ─── WELCOME MESSAGE ───
             try {
                 const ownerJid = `${cleanNumber}@s.whatsapp.net`;
-                const welcomeCaption = `💚 *${global.BOT_NAME}* is now online!`;
+                const uptimeSec = Math.floor((Date.now() - startedAt) / 1000);
+
+                const welcomeCaption =
+`💚 *${global.BOT_NAME}* is now online!
+
+━━━━━━━━━━━━━━━━━━
+
+👋 *Welcome back, ${global.OWNER_NAME}!*
+
+Your WhatsApp bot is successfully connected and ready to serve. All systems are running smoothly.
+
+━━━━━━━━━━━━━━━━━━
+
+📋 *Bot Information*
+
+• 🤖 *Bot Name* : ${global.BOT_NAME}
+• 🧠 *Version*  : ${global.VERSION}
+• 📱 *Number*   : +${cleanNumber}
+• 🌐 *Prefix*   : ${global.PREFIX}
+• 🕒 *Time*     : ${new Date().toLocaleString(config.TIMEZONE)}
+• ⏱️ *Uptime*   : ${uptimeSec}s
+• 🔓 *Mode*     : ${config.PUBLIC_PAIRING ? 'Public' : 'Private'}
+
+━━━━━━━━━━━━━━━━━━
+
+⚡ *Quick Start*
+
+• Type *${global.PREFIX}menu* to see all commands
+• Type *${global.PREFIX}ping* to test the bot
+
+━━━━━━━━━━━━━━━━━━
+
+> 💚 *Powered by Arslan Tech's*
+> 🎀 *Made with love for Saba*`;
+
                 await helper.sendWithLogo(sock, ownerJid, welcomeCaption);
+                fancyLog('SUCCESS', `[${cleanNumber}] Welcome message sent.`);
             } catch (err) {
                 fancyLog('WARN', `[${cleanNumber}] Welcome msg failed: ${err.message}`);
             }
@@ -214,8 +281,6 @@ async function createPairingCode(number) {
         sessionData = await startBotForUser(cleanNumber);
     }
 
-    // ✅ FIX: Wait until the socket is ready for pairing (QR event received)
-    // Agar ready nahi hai, toh 10 second tak wait karo
     let waited = 0;
     while (!sessionData.isReadyForPairing && waited < 10000) {
         await new Promise(r => setTimeout(r, 500));
