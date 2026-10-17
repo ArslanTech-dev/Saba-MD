@@ -239,12 +239,12 @@ app.use((err, req, res, next) => {
 });
 
 // ===============================================
-//  ▶️ START SERVER — Pxxl / Cloud compatible
+//  ▶️ START SERVER — Pxxl compatible (Force Port 3000)
 // ===============================================
 function startServer() {
-    const port = process.env.PORT || 3000;
+    // Pxxl public route explicitly port 3000 par map hota hai
+    const port = 3000;
 
-    // 0.0.0.0 bind karna zaroori hai taaki Pxxl isko access kar sake
     const server = app.listen(port, '0.0.0.0', () => {
         fancyLog('SUCCESS', `🌐 Pairing website running on port ${port}`);
         fancyLog('INFO',    `🔗 Pair API:  /api/pair`);
