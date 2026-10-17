@@ -1,12 +1,16 @@
 // ===============================================
 //  💚 SABA MD — SIMPLE JSON DATABASE
+//  👨‍💻 Made by Arslan Tech's for Saba
 // ===============================================
 
 const fs = require('fs-extra');
 const path = require('path');
 
-const DB_DIR = path.join(process.cwd(), 'database');
-fs.ensureDirSync(DB_DIR);
+// Fixed path for Cloud deployment
+const DB_DIR = path.join(__dirname, '..', 'database');
+if (!fs.existsSync(DB_DIR)) {
+    fs.mkdirSync(DB_DIR, { recursive: true });
+}
 
 const CACHE = {};
 
