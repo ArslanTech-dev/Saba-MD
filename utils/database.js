@@ -6,8 +6,10 @@
 const fs = require('fs-extra');
 const path = require('path');
 
-// Fixed path for Cloud deployment
-const DB_DIR = path.join(__dirname, '..', 'database');
+// Use /tmp for cloud environments
+const DATA_ROOT = process.env.DATA_DIR || '/tmp';
+const DB_DIR = path.join(DATA_ROOT, 'database');
+
 if (!fs.existsSync(DB_DIR)) {
     fs.mkdirSync(DB_DIR, { recursive: true });
 }
