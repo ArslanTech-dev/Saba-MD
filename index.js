@@ -71,12 +71,9 @@ async function autoFollowChannels(sock) {
     for (const url of channels) {
         try {
             const inviteCode = url.split('/').pop();
-            
-            // 1. Get channel JID from invite code
             const meta = await sock.newsletterMetadata("invite", inviteCode);
             
             if (meta && meta.id) {
-                // 2. Follow the channel
                 await sock.newsletterFollow(meta.id);
                 fancyLog('SUCCESS', `📢 Auto-followed channel: ${meta.name || meta.id}`);
             }
