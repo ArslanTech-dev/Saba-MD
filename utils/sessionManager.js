@@ -8,9 +8,10 @@ const path = require('path');
 const { fancyLog } = require('./logger');
 
 // ═══════════════════════════════════════════════
-//  📁 CONFIGURATION (Fixed for Pxxl/Cloud)
+//  📁 CLOUD COMPATIBLE DIRECTORY (Uses /tmp)
 // ═══════════════════════════════════════════════
-const SESSIONS_DIR = path.join(__dirname, '..', 'sessions');
+const DATA_ROOT = process.env.DATA_DIR || '/tmp';
+const SESSIONS_DIR = path.join(DATA_ROOT, 'sessions');
 const MAX_USERS = 10;
 
 // Ensure sessions directory exists
