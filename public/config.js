@@ -7,7 +7,7 @@
 window.SABA_CONFIG = {
     // ─── Backend API URL ───
     // Phase 3 ke baad ClawCloud URL yahan daalo
-    API_URL: '',
+    API_URL: 'https://saba-md.pxxlspace.cv',
 
     // ─── Branding ───
     BOT_NAME: 'Saba MD',
