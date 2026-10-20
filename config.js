@@ -1,23 +1,24 @@
 // ===============================================
-//  💚 SABA MD — CONFIGURATION
+//  💚 SABA MD — CONFIGURATION (Backend)
 //  👨‍💻 Made by Arslan Tech's for Saba
 // ===============================================
 
-require('dotenv').config();
+// Overriding is necessary for Termux/Cloud to prevent system env conflicts
+require('dotenv').config({ override: true });
 
 module.exports = {
 
     // ─── 1. BOT IDENTITY ──────────────────────────
     BOT_NAME:   process.env.BOT_NAME   || 'Saba MD',
-    BOT_LOGO:   './assets/logo.png',        // main logo
-    BOT_BANNER: './assets/banner.png',      // wide banner
+    BOT_LOGO:   './assets/logo.png',        // Main logo
+    BOT_BANNER: './assets/banner.png',      // Wide banner
     BOT_SABA:   './assets/saba.png',        // Saba special
-    VERSION:    process.env.VERSION    || '1.0.0',
+    VERSION:    process.env.VERSION    || '2.0.0',
     PREFIX:     process.env.PREFIX     || '.',
 
     // ─── 2. OWNER INFO ────────────────────────────
     OWNER_NAME: process.env.OWNER_NAME || 'Saba',
-    OWNER: (process.env.OWNER_NUMBER || '923001234567')
+    OWNER: (process.env.OWNER_NUMBER || '923037314690')
         .split(',')
         .map(n => n.trim())
         .filter(Boolean)
@@ -34,21 +35,21 @@ module.exports = {
     ANTI_CALL:       process.env.ANTI_CALL === 'true'       || false,
     AUTO_BLOCK_CALL: process.env.AUTO_BLOCK_CALL === 'true' || false,
 
-    // ─── 6. WEBSITE ──────────────────────────────
+    // ─── 6. WEBSITE SETTINGS ─────────────────────
     PORT: process.env.PORT || 3000,
+    TIMEZONE: process.env.TZ || 'Asia/Karachi',
+    
     WEBSITE: {
-        title:   'Saba MD — WhatsApp Pairing',
+        title:   'Saba MD — Advanced Platform',
         tagline: 'Connect your WhatsApp in seconds. No QR scan needed.',
-        theme:   'green-gradient',
+        theme:   'dark-cloud',
         github:  'https://github.com/ArslanTech-dev/Saba-MD',
-        accent:  '#25D366',
+        accent:  '#35d4ff',
     },
 
-    // ─── 7. TIMEZONE ─────────────────────────────
-    TIMEZONE: process.env.TZ || 'Asia/Karachi',
-
-    // ─── 8. BEHAVIOUR ────────────────────────────
+    // ─── 7. BEHAVIOUR ────────────────────────────
     autoRead:    true,
     autoTyping:  true,
     cmdCooldown: 3000,
+    ANTIDELETE_DM: process.env.ANTIDELETE_DM === 'true' || false,
 };
