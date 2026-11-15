@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@hapi/boom": "^10.0.1",
-    "@ms-nicky/baileys": "2.0.4",
+    "@whiskeysockets/baileys": "7.0.0-rc14",
     "awesome-phonenumber": "^7.0.0",
     "axios": "^1.7.9",
     "chalk": "^4.1.2",
