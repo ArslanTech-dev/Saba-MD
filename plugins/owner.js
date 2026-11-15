@@ -495,7 +495,7 @@ ${BOT}`, msg);
             await react('⏳');
 
             try {
-                const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
+                const { downloadContentFromMessage } = require('@ms-nicky/baileys');
                 const stream = await downloadContentFromMessage(quoted.imageMessage, 'image');
                 let buffer = Buffer.from([]);
                 for await (const chunk of stream) {
