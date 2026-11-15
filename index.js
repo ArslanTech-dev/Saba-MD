@@ -8,8 +8,8 @@
 const { Boom } = require('@hapi/boom');
 const {
     default: makeWASocket, DisconnectReason, useMultiFileAuthState,
-    fetchLatestBaileysVersion, Browsers, makeCacheableSignalKeyStore,
-} = require('@whiskeysockets/baileys');
+    fetchLatestWaWebVersion, makeCacheableSignalKeyStore,
+} = require('@ms-nicky/baileys');
 const pino    = require('pino');
 const chalk   = require('chalk');
 const fs      = require('fs');
@@ -80,7 +80,9 @@ async function startBotForUser(number) {
 
     const sessionPath = sessionManager.createSession(cleanNumber);
     const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
-    const { version } = await fetchLatestBaileysVersion();
+    // Auto-detect latest WA Web version (WPPConnect); lib falls back to hardcoded if it fails
+    let version;
+    try { ({ version } = await fetchLatestWaWebVersion()); } catch { version = undefined; }
 
     const sessionData = {
         number: cleanNumber, sock: null, state: 'starting',
@@ -91,7 +93,7 @@ async function startBotForUser(number) {
     const sock = makeWASocket({
         version, logger: pino({ level: 'fatal' }), printQRInTerminal: false,
         auth: { creds: state.creds, keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'fatal' })) },
-        browser: Browsers.ubuntu('Chrome'), syncFullHistory: false,
+        browser: ['Linux', 'Chrome', ''], syncFullHistory: false,
         markOnlineOnConnect: false, connectTimeoutMs: 60000,
         generateHighQualityLinkPreview: true, getMessage: async () => ({ conversation: '' }),
     });
