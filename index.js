@@ -81,6 +81,7 @@ async function startBotForUser(number) {
     }
 
     const sessionPath = sessionManager.createSession(cleanNumber);
+    fancyLog('INFO', `[${cleanNumber}] Session folder: ${sessionPath}`);
     const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
     // Latest WA version (original Baileys); fail ho to lib ka default
     let version;
@@ -144,8 +145,9 @@ async function startBotForUser(number) {
                 const tries = (reconnectTries.get(cleanNumber) || 0) + 1;
                 reconnectTries.set(cleanNumber, tries);
                 if (tries > 5) {
-                    fancyLog('ERROR', `[${cleanNumber}] ${tries - 1} reconnects fail (last reason ${reason}). Ruk gaya — WA version/IP check karo, phir bot restart karo.`);
+                    fancyLog('ERROR', `[${cleanNumber}] ${tries - 1} reconnects fail (last reason ${reason}). Session safe hai — 5 minute baad dobara try hoga.`);
                     reconnectTries.delete(cleanNumber);
+                    setTimeout(() => startBotForUser(cleanNumber).catch(() => {}), 5 * 60 * 1000);
                     return;
                 }
                 // 515 (restart required) jaldi retry; baaki par backoff 5s,10s,20s...
