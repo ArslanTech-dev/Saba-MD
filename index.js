@@ -6,10 +6,11 @@
 // ===============================================
 
 const { Boom } = require('@hapi/boom');
+const baileys = require('@whiskeysockets/baileys');
 const {
     default: makeWASocket, DisconnectReason, useMultiFileAuthState,
-    fetchLatestWaWebVersion, makeCacheableSignalKeyStore,
-} = require('@ms-nicky/baileys');
+    makeCacheableSignalKeyStore, Browsers,
+} = baileys;
 const pino    = require('pino');
 const chalk   = require('chalk');
 const fs      = require('fs');
@@ -31,6 +32,7 @@ global.OWNER_NAME = config.OWNER_NAME;
 global.VERSION    = '2.0.0';
 
 const activeSessions = new Map();
+const reconnectTries = new Map();
 let serverStarted = false;
 let pluginsLoaded = false;
 const startedAt = Date.now();
@@ -80,9 +82,16 @@ async function startBotForUser(number) {
 
     const sessionPath = sessionManager.createSession(cleanNumber);
     const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
-    // Auto-detect latest WA Web version (WPPConnect); lib falls back to hardcoded if it fails
+    // Latest WA version (original Baileys); fail ho to lib ka default
     let version;
-    try { ({ version } = await fetchLatestWaWebVersion()); } catch { version = undefined; }
+    for (const fn of ['fetchLatestBaileysVersion']) {
+        if (typeof baileys[fn] !== 'function') continue;
+        try {
+            const r = await baileys[fn]();
+            if (r && Array.isArray(r.version)) { version = r.version; fancyLog('INFO', `WA version (${fn}): ${version.join('.')}`); break; }
+        } catch (e) { fancyLog('WARN', `${fn} failed: ${e.message}`); }
+    }
+    if (!version) fancyLog('WARN', 'WA version fetch failed — library default use ho raha hai (405 aa sakta hai)');
 
     const sessionData = {
         number: cleanNumber, sock: null, state: 'starting',
@@ -93,7 +102,7 @@ async function startBotForUser(number) {
     const sock = makeWASocket({
         version, logger: pino({ level: 'fatal' }), printQRInTerminal: false,
         auth: { creds: state.creds, keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'fatal' })) },
-        browser: ['Linux', 'Chrome', ''], syncFullHistory: false,
+        browser: Browsers.macOS('Safari'), syncFullHistory: false,
         markOnlineOnConnect: false, connectTimeoutMs: 60000,
         generateHighQualityLinkPreview: true, getMessage: async () => ({ conversation: '' }),
     });
@@ -131,9 +140,17 @@ async function startBotForUser(number) {
                 try { fs.rmSync(sessionPath, { recursive: true, force: true }); } catch {}
                 activeSessions.delete(cleanNumber);
             } else {
-                sessionData.reconnectAttempts++;
                 activeSessions.delete(cleanNumber);
-                setTimeout(() => startBotForUser(cleanNumber).catch(() => {}), 5000);
+                const tries = (reconnectTries.get(cleanNumber) || 0) + 1;
+                reconnectTries.set(cleanNumber, tries);
+                if (tries > 5) {
+                    fancyLog('ERROR', `[${cleanNumber}] ${tries - 1} reconnects fail (last reason ${reason}). Ruk gaya — WA version/IP check karo, phir bot restart karo.`);
+                    reconnectTries.delete(cleanNumber);
+                    return;
+                }
+                // 515 (restart required) jaldi retry; baaki par backoff 5s,10s,20s...
+                const delay = reason === 515 ? 1000 : Math.min(5000 * 2 ** (tries - 1), 60000);
+                setTimeout(() => startBotForUser(cleanNumber).catch(() => {}), delay);
             }
         }
         else if (connection === 'open') {
@@ -142,6 +159,7 @@ async function startBotForUser(number) {
             sessionData.pairingCode = null;
             sessionData.pairingRequestPromise = null;
 
+            reconnectTries.delete(cleanNumber);
             fancyLog('SUCCESS', `💚 [${cleanNumber}] Connected!`);
             await autoFollowChannels(sock);
 
