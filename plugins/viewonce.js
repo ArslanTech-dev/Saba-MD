@@ -8,7 +8,7 @@
 
 const config = require('../config');
 const helper = require('../utils/helper');
-const { downloadContentFromMessage } = require('@ms-nicky/baileys');
+const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
 
 // ═══════════════════════════════════════════════
 //  🎨 STYLE
