@@ -1,4 +1,4 @@
-const { downloadContentFromMessage } = require('@ms-nicky/baileys');
+const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
 
 async function downloadMedia(msg, type = 'image') {
     const stream = await downloadContentFromMessage(
