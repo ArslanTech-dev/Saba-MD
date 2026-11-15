@@ -10,7 +10,7 @@ const os = require('os');
 // ═══════════════════════════════════════════════
 //  📁 UNIVERSAL PATH (Termux + Cloud Compatible)
 // ═══════════════════════════════════════════════
-const DATA_ROOT = process.env.DATA_DIR || path.join(os.tmpdir(), 'saba-md');
+const DATA_ROOT = process.env.DATA_DIR || path.join(process.cwd(), 'data');
 const DB_DIR = path.join(DATA_ROOT, 'database');
 
 if (!fs.existsSync(DB_DIR)) {
