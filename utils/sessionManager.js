@@ -11,9 +11,9 @@ const { fancyLog } = require('./logger');
 // ═══════════════════════════════════════════════
 //  📁 UNIVERSAL PATH (Termux + Cloud Compatible)
 // ═══════════════════════════════════════════════
-// os.tmpdir() Termux pe /data/data/.../tmp deta hai
-// aur Pxxl/Render pe /tmp deta hai. Dono writable hain.
-const DATA_ROOT = process.env.DATA_DIR || path.join(os.tmpdir(), 'saba-md');
+// Default: <project>/data/sessions (PERMANENT — restart par bhi bachi rehti hai).
+// Persistent disk/volume ho to DATA_DIR env us path par set karo.
+const DATA_ROOT = process.env.DATA_DIR || path.join(process.cwd(), 'data');
 const SESSIONS_DIR = path.join(DATA_ROOT, 'sessions');
 const MAX_USERS = 10;
 
@@ -69,8 +69,8 @@ function isFull() {
 function createSession(number) {
     const sessionPath = getSessionPath(number);
     if (fs.existsSync(sessionPath)) {
-        fs.emptyDirSync(sessionPath);
-        fancyLog('PAIRING', `Session cleared for ${cleanNumber(number)}`);
+        // Existing session ko KHAALI NAHI karna — warna har restart/reconnect par login ud jata hai
+        fancyLog('INFO', `Session reused for ${cleanNumber(number)}`);
     } else {
         fs.ensureDirSync(sessionPath);
         fancyLog('PAIRING', `New session created for ${cleanNumber(number)}`);
